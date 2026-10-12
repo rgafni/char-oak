@@ -95,12 +95,18 @@
     ['hall', 'Hall', '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>'],
     ['club', 'Club', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>']];
   var TAB_OF = { home: 'home', meetings: 'meetings', m: 'meetings', live: 'meetings', archive: 'archive', a: 'archive', hall: 'hall', club: 'club', p: 'club', wish: 'club', admin: 'club', builder: 'club', me: 'club' };
-  var LOGO = '<img class="logo" src="icons/logo-240.png" alt="Char &amp; Oak" width="44" height="44">';
+  var LOGO = '<img class="logo" src="icons/logo-160.png" alt="Char &amp; Oak" width="60" height="60">';
+  var STARS = '<div class="stars" aria-hidden="true">\u2605 \u2605 \u2605</div>';
+  function wheat(cls) {
+    var g = '', i; for (i = 0; i < 8; i++) { var y = 14 + i * 12; g += '<ellipse cx="' + (30 - i * 1.2) + '" cy="' + y + '" rx="5" ry="9" transform="rotate(-28 ' + (30 - i * 1.2) + ' ' + y + ')" fill="url(#wg)"/><ellipse cx="' + (42 - i * 1.6) + '" cy="' + (y + 5) + '" rx="5" ry="9" transform="rotate(28 ' + (42 - i * 1.6) + ' ' + (y + 5) + ')" fill="url(#wg)"/>'; }
+    return '<svg class="wheat ' + (cls || '') + '" viewBox="0 0 70 150" aria-hidden="true"><defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D27A"/><stop offset=".55" stop-color="#D19A32"/><stop offset="1" stop-color="#8A5A16"/></linearGradient></defs><path d="M36 8 C 34 60, 30 110, 22 148" stroke="#B9852A" stroke-width="2.4" fill="none"/>' + g + '</svg>';
+  }
+  function badge(cls) { return '<div class="badge ' + (cls || '') + '"><img src="icons/logo-720.png" alt="Char &amp; Oak, est. 2023" width="720" height="720"></div>'; }
 
   function shell(title, body, opt) {
     opt = opt || {}; var r = route(), tab = TAB_OF[r.name] || 'home', liveEv = (S.events || []).filter(function (e) { return e.status === 'live'; })[0];
     document.body.classList.toggle('full', !!opt.full);
-    var top = '<header class="top noprint">' + (opt.back ? '<button class="back" data-go="' + esc(opt.back) + '" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>Back</button><div class="grow"></div>'
+    var top = '<header class="top noprint' + (opt.back ? ' compact' : '') + '">' + (opt.back ? '<button class="back" data-go="' + esc(opt.back) + '" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button><a class="brand" href="#/">' + LOGO + '<span><b>Char &amp; Oak</b><small>A Whiskey Club</small></span></a>'
       : '<a class="brand" href="#/">' + LOGO + '<span><b>Char &amp; Oak</b><small>' + esc(title || 'A Whiskey Club') + '</small></span></a>')
       + (DEMO ? '<button class="pill amber" data-act="demoAs" aria-label="Switch demo taster">Demo: ' + esc(S.me.name.split(' ')[0]) + '</button>' : '')
       + '<button class="btn ghost sm" data-go="p/' + esc(S.me.id) + '" aria-label="My profile">' + av(S.me, 'sm') + '</button></header>';
@@ -117,12 +123,12 @@
   function past() { return (S.events || []).filter(function (e) { return e.status === 'revealed'; }).sort(function (a, b) { return evDate(b).localeCompare(evDate(a)); }); }
   function vHome() {
     var st = CO.stats(S), up = upcoming(), last = past()[0], live = up.filter(function (e) { return e.status === 'live'; })[0], next = up.filter(function (e) { return e.status !== 'live'; })[0];
-    var h = '<p class="eyebrow">' + esc((S.settings && S.settings.groupName) || 'Char & Oak: A Whiskey Club') + '</p><h1>Good to see you, ' + esc(S.me.nick || S.me.name.split(' ')[0]) + '.</h1>';
+    var h = '<div class="hero">' + badge('big') + '<p class="eyebrow center">\u2605 A Whiskey Club \u00b7 Est. 2023 \u2605</p></div><h1 class="center">Welcome, ' + esc(S.me.nick || S.me.name.split(' ')[0]) + '.</h1>';
     if (live) h += '<div class="card live"><p class="eyebrow">Live now</p><h2>' + esc(live.title) + '</h2><p class="muted">' + (live.bottles || []).length + ' bottles are poured and sealed. ' + Object.keys(live.progress || {}).length + ' tasters scoring.</p><button class="btn ember block pulse" data-go="live/' + live.id + '">Open my scoresheet</button></div>';
     if (next) h += nextCard(next);
     else if (!live) h += '<div class="card"><p class="eyebrow">Next meeting</p><p class="muted">Nothing planned yet.</p>' + (isAdmin() ? '<button class="btn primary block" data-go="meetings/new">Plan the next meeting</button>' : '<p class="small dim">Roni will post dates soon. Meanwhile, vote on what to pour next.</p><button class="btn block" data-go="wish">Bottle wishlist</button>') + '</div>';
     if (last) { var R = CO.results(last, S.scores, S.members), w = R.winner;
-      if (w) h += '<div class="card glow"><p class="eyebrow">Last champion \u00b7 ' + esc(fmtDay(evDate(last))) + '</p><div class="row"><div class="crown" aria-hidden="true">\uD83D\uDC51</div><div class="grow"><h2>' + esc(w.bottle.name) + '</h2><p class="muted small">' + esc([w.bottle.distillery, w.bottle.style, w.bottle.proof ? w.bottle.proof + ' proof' : ''].filter(Boolean).join(' \u00b7 ')) + '</p></div><div class="oakscore">' + sc(w.mean) + '</div></div><button class="btn block" data-go="a/' + last.id + '">See the full results</button></div>'; }
+      if (w) h += '<div class="card glow champ">' + wheat('l') + wheat('r') + '<p class="eyebrow">Last champion \u00b7 ' + esc(fmtDay(evDate(last))) + '</p><div class="row"><div class="crown" aria-hidden="true">\uD83D\uDC51</div><div class="grow"><h2>' + esc(w.bottle.name) + '</h2><p class="muted small">' + esc([w.bottle.distillery, w.bottle.style, w.bottle.proof ? w.bottle.proof + ' proof' : ''].filter(Boolean).join(' \u00b7 ')) + '</p></div><div class="oakscore">' + sc(w.mean) + '</div></div><button class="btn block" data-go="a/' + last.id + '">See the full results</button></div>'; }
     h += '<div class="grid3"><div class="stat"><b>' + st.events + '</b><span>tastings</span></div><div class="stat"><b>' + st.bottles.length + '</b><span>bottles judged</span></div><div class="stat"><b>' + (st.clubAvg == null ? '\u2013' : sc(st.clubAvg)) + '</b><span>club average</span></div></div>';
     h += '<div class="sec"><h2>Explore</h2></div><div class="list">'
       + tile('hall', '\uD83C\uDFC6', 'Hall of Fame', 'Champions, leaderboards, palate twins')
@@ -383,16 +389,16 @@
     if (e.status !== 'revealed') return go('live/' + id);
     var R = CO.results(e, S.scores, S.members), order = R.ranked.slice().reverse(), rv = UI.rv && UI.rv.id === id ? UI.rv : (UI.rv = { id: id, step: 0, open: false });
     var n = order.length, h = '';
-    if (rv.step === 0) h = '<div class="stage"><p class="eyebrow">' + esc(e.title) + '</p><h1>The Reveal</h1><p class="muted">' + n + ' glasses. ' + R.scorers + ' tasters. One champion.</p><div id="cnt"></div><button class="btn primary block" data-act="rvGo">Begin the reveal</button><button class="btn ghost block" data-go="a/' + id + '">Skip to the results</button></div>';
+    if (rv.step === 0) h = '<div class="stage">' + badge('mid') + '<p class="eyebrow">' + esc(e.title) + '</p><h1>The Reveal</h1><p class="muted">' + n + ' glasses. ' + R.scorers + ' tasters. One champion.</p><div id="cnt"></div><button class="btn primary block" data-act="rvGo">Begin the reveal</button><button class="btn ghost block" data-go="a/' + id + '">Skip to the results</button></div>';
     else if (rv.step <= n) {
       var b = order[rv.step - 1], isW = rv.step === n, rk = n - rv.step + 1;
-      h = '<div class="stage' + (isW ? ' winner' : '') + '"><p class="rank">' + (isW ? 'And the winner is\u2026' : 'In ' + ordinal(rk) + ' place') + '</p>'
-        + '<div class="flip' + (rv.open ? ' open' : '') + '"><div class="in"><div class="face front"><div class="code">' + b.code + '</div><p class="muted">Glass ' + b.code + '</p></div>'
-        + '<div class="face back">' + (isW ? '<div class="crown" aria-hidden="true">\uD83D\uDC51</div>' : '<p class="rank">Glass ' + b.code + '</p>') + '<div class="nm">' + esc(b.bottle.name) + '</div><p class="muted small">' + esc([b.bottle.distillery, b.bottle.style, b.bottle.proof ? b.bottle.proof + ' proof' : '', b.bottle.age].filter(Boolean).join(' \u00b7 ')) + '</p><div class="sc" id="cup">' + (rv.open ? sc(b.mean) : '') + '</div><p class="small muted">Oak Score \u00b7 ' + esc(b.verdict) + '</p></div></div></div>'
+      h = '<div class="stage' + (isW ? ' winner' : '') + '"><img class="logo stage-logo" src="icons/logo-160.png" alt="">' + (isW ? STARS : '') + '<p class="rank">' + (isW ? 'And the winner is\u2026' : 'In ' + ordinal(rk) + ' place') + '</p>'
+        + '<div class="framed">' + (isW ? wheat('l') : '') + '<div class="flip' + (rv.open ? ' open' : '') + '"><div class="in"><div class="face front"><div class="code">' + b.code + '</div><p class="muted">Glass ' + b.code + '</p></div>'
+        + '<div class="face back">' + (isW ? '<div class="crown" aria-hidden="true">\uD83D\uDC51</div>' : '<p class="rank">Glass ' + b.code + '</p>') + '<div class="nm">' + esc(b.bottle.name) + '</div><p class="muted small">' + esc([b.bottle.distillery, b.bottle.style, b.bottle.proof ? b.bottle.proof + ' proof' : '', b.bottle.age].filter(Boolean).join(' \u00b7 ')) + '</p><div class="sc" id="cup">' + (rv.open ? sc(b.mean) : '') + '</div><p class="small muted">Oak Score \u00b7 ' + esc(b.verdict) + '</p></div></div></div>' + (isW ? wheat('r') : '') + '</div>'
         + (rv.open ? '<button class="btn primary block" data-act="rvNext">' + (isW ? 'Who guessed best?' : 'Next glass') + '</button>' : '<button class="btn ember block pulse" data-act="rvOpen">Unmask ' + b.code + '</button>') + '</div>';
     } else {
       var G = Object.keys(R.guess).map(function (k) { return R.guess[k]; }).sort(function (a, b) { return b.pts - a.pts; });
-      h = '<div class="stage"><p class="eyebrow">Guess the bottle</p><h1>\uD83C\uDFAF Sharpest palate</h1><div class="list">' + G.slice(0, 8).map(function (g, i) { return '<div class="item"><span class="medal">' + (['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'][i] || '\u00b7') + '</span><span class="grow t">' + esc(g.name) + '</span><b>' + g.pts + ' pts</b></div>'; }).join('') + '</div>'
+      h = '<div class="stage">' + badge('mid') + '<p class="eyebrow">Guess the bottle</p><h1>\uD83C\uDFAF Sharpest palate</h1><div class="list">' + G.slice(0, 8).map(function (g, i) { return '<div class="item"><span class="medal">' + (['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'][i] || '\u00b7') + '</span><span class="grow t">' + esc(g.name) + '</span><b>' + g.pts + ' pts</b></div>'; }).join('') + '</div>'
         + '<button class="btn primary block" data-go="a/' + id + '">Full results, notes &amp; charts</button><button class="btn block" data-act="shareCard" data-id="' + id + '">Share the results card</button></div>';
     }
     shell('', h, { back: 'a/' + id, full: true });
@@ -458,7 +464,7 @@
     if (e.status !== 'revealed') return go('m/' + id);
     var R = CO.results(e, S.scores, S.members), w = R.winner, seg = UI.seg['a' + id] || 'results';
     var h = '<p class="eyebrow">' + esc(fmtDay(evDate(e), true)) + (e.host ? ' \u00b7 hosted by ' + esc(nameOf(e.host)) : '') + '</p><h1>' + esc(e.title) + '</h1>' + (e.theme ? '<p class="muted">' + esc(e.theme) + '</p>' : '');
-    if (w) h += '<div class="card glow center"><div class="crown" aria-hidden="true">\uD83D\uDC51</div><p class="eyebrow">Champion of the night \u00b7 Glass ' + w.code + '</p><h2>' + esc(w.bottle.name) + '</h2><p class="muted small">' + esc([w.bottle.distillery, w.bottle.line, w.bottle.style, w.bottle.proof ? w.bottle.proof + ' proof' : '', w.bottle.age, w.bottle.price].filter(Boolean).join(' \u00b7 ')) + '</p><div class="oakscore">' + sc(w.mean) + '</div><p class="small muted">Oak Score \u00b7 ' + w.n + ' tasters \u00b7 ' + esc(w.verdict) + '</p><div class="btns"><button class="btn primary" data-act="shareCard" data-id="' + id + '">Share results card</button><button class="btn" data-act="replay" data-id="' + id + '">Replay the reveal</button></div></div>';
+    if (w) h += '<div class="card glow center champ">' + wheat('l') + wheat('r') + STARS + '<div class="crown" aria-hidden="true">\uD83D\uDC51</div><p class="eyebrow">Champion of the night \u00b7 Glass ' + w.code + '</p><h2>' + esc(w.bottle.name) + '</h2><p class="muted small">' + esc([w.bottle.distillery, w.bottle.line, w.bottle.style, w.bottle.proof ? w.bottle.proof + ' proof' : '', w.bottle.age, w.bottle.price].filter(Boolean).join(' \u00b7 ')) + '</p><div class="oakscore">' + sc(w.mean) + '</div><p class="small muted">Oak Score \u00b7 ' + w.n + ' tasters \u00b7 ' + esc(w.verdict) + '</p><div class="btns"><button class="btn primary" data-act="shareCard" data-id="' + id + '">Share results card</button><button class="btn" data-act="replay" data-id="' + id + '">Replay the reveal</button></div></div>';
     h += '<div class="seg" role="tablist">' + [['results', 'Results'], ['notes', 'Notes'], ['scores', 'Scores'], ['photos', 'Photos' + ((e.photos || []).length ? ' (' + e.photos.length + ')' : '')]].map(function (s) { return '<button role="tab" class="' + (seg === s[0] ? 'on' : '') + '" data-act="seg" data-id="a' + id + '" data-s="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>';
     if (seg === 'results') {
       h += '<div class="card"><h3>The standings</h3>' + hbars(R.ranked.map(function (b) { return { code: b.code, v: b.mean, lo: b.min, hi: b.max, label: sc(b.mean), name: (b.bottle.name || '').slice(0, 34) }; }), 100) + '<p class="small dim">Bar = average Oak Score. Line = lowest to highest score.</p></div>';
@@ -530,18 +536,23 @@
       if (t.hasAttribute('data-del')) { lb.remove(); confirmBox('Delete this photo?', 'It goes to the trash in the club Drive folder.', 'Delete', 'danger').then(function (y) { if (y) act('removePhoto', [id, pid], 'Deleted'); }); } };
   }
   /* shareable results card (PNG, made on the phone) */
-  var LOGO_IMG = new Image(); LOGO_IMG.src = 'icons/logo-640.png';
+  var LOGO_IMG = new Image(); LOGO_IMG.src = 'icons/logo-720.png';
   function shareCard(id) {
+    var f = document.fonts ? Promise.all(['58px "Pirata One"', '700 40px Cinzel', '700 20px Manrope'].map(function (x) { return document.fonts.load(x); })) : Promise.resolve();
+    var l = LOGO_IMG.complete ? Promise.resolve() : new Promise(function (r) { LOGO_IMG.onload = LOGO_IMG.onerror = r; });
+    Promise.all([f, l]).then(function () { shareCard_(id); }, function () { shareCard_(id); });
+  }
+  function shareCard_(id) {
     var e = ev(id), R = CO.results(e, S.scores, S.members), c = document.createElement('canvas'), W = 1080, H = 1350; c.width = W; c.height = H; var x = c.getContext('2d');
-    var g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1c130c'); g.addColorStop(1, '#000000'); x.fillStyle = g; x.fillRect(0, 0, W, H);
-    for (var i = 0; i < 40; i++) { x.strokeStyle = 'rgba(92,66,41,' + (0.05 + Math.random() * .08) + ')'; x.lineWidth = 2; x.beginPath(); var yy = i * 36; x.moveTo(0, yy); x.bezierCurveTo(300, yy + 20, 700, yy - 20, W, yy + 10); x.stroke(); }
-    x.strokeStyle = '#E0A03A'; x.lineWidth = 4; x.strokeRect(40, 40, W - 80, H - 80);
-    x.textAlign = 'center'; if (LOGO_IMG && LOGO_IMG.complete && LOGO_IMG.naturalWidth) { x.save(); x.beginPath(); x.arc(W / 2, 160, 112, 0, 7); x.clip(); x.drawImage(LOGO_IMG, W / 2 - 112, 48, 224, 224); x.restore(); } x.fillStyle = '#C9CDD2'; x.font = '800 24px Manrope, sans-serif'; x.fillText('A   W H I S K E Y   C L U B', W / 2, 290);
-    x.fillStyle = '#F4E7D0'; x.font = '600 72px Cormorant, Georgia, serif'; x.font = '600 60px Cormorant, Georgia, serif'; wrap(x, e.title, W / 2, 370, 900, 62);
-    x.fillStyle = '#C9B293'; x.font = '600 34px Manrope, sans-serif'; x.fillText(fmtDay(evDate(e), true), W / 2, 440);
+    var g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#000000'); g.addColorStop(1, '#0b0805'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    for (var i = 0; i < 40; i++) { x.strokeStyle = 'rgba(120,90,55,' + (0.04 + Math.random() * .05) + ')'; x.lineWidth = 2; x.beginPath(); var yy = i * 36; x.moveTo(0, yy); x.bezierCurveTo(300, yy + 20, 700, yy - 20, W, yy + 10); x.stroke(); }
+    x.strokeStyle = '#C8922E'; x.lineWidth = 4; x.strokeRect(30, 30, W - 60, H - 60); x.strokeStyle = 'rgba(213,217,222,.35)'; x.lineWidth = 1.5; x.strokeRect(44, 44, W - 88, H - 88);
+    x.textAlign = 'center'; if (LOGO_IMG && LOGO_IMG.complete && LOGO_IMG.naturalWidth) x.drawImage(LOGO_IMG, W / 2 - 170, 40, 340, 340); x.fillStyle = '#C9CDD2'; x.font = '800 24px Manrope, sans-serif'; x.fillText('A   W H I S K E Y   C L U B', W / 2, 395);
+    x.fillStyle = '#F4E7D0'; x.font = '600 72px Cormorant, Georgia, serif'; x.fillStyle = '#E6E9EC'; x.font = '58px "Pirata One", Georgia, serif'; wrap(x, e.title, W / 2, 470, 900, 60);
+    x.fillStyle = '#C9B293'; x.font = '600 34px Manrope, sans-serif'; x.fillText(fmtDay(evDate(e), true), W / 2, 530);
     var w = R.winner;
-    if (w) { x.font = '80px serif'; x.fillText('\uD83D\uDC51', W / 2, 550); x.fillStyle = '#F4BE5C'; x.font = '700 60px Cormorant, Georgia, serif'; wrap(x, w.bottle.name, W / 2, 630, 920, 64);
-      x.font = '800 128px Manrope, sans-serif'; x.fillText(sc(w.mean), W / 2, 800); x.fillStyle = '#C9B293'; x.font = '700 28px Manrope, sans-serif'; x.fillText('OAK SCORE \u00b7 GLASS ' + w.code, W / 2, 850); }
+    if (w) { x.fillStyle = '#D4A23C'; x.font = '700 34px Cinzel, serif'; x.fillText('\u2605  CHAMPION  \u2605', W / 2, 610); x.fillStyle = '#F0C869'; x.font = '64px "Pirata One", Georgia, serif'; wrap(x, w.bottle.name, W / 2, 685, 920, 66);
+      x.font = '700 120px Cinzel, serif'; x.fillText(sc(w.mean), W / 2, 830); x.fillStyle = '#B9BEC4'; x.font = '700 28px Manrope, sans-serif'; x.fillText('OAK SCORE \u00b7 GLASS ' + w.code, W / 2, 880); }
     R.ranked.slice(1, 5).forEach(function (b, i) { var y = 950 + i * 80; x.textAlign = 'left'; x.fillStyle = '#E0A03A'; x.font = '700 46px Cormorant, Georgia, serif'; x.fillText((i + 2) + '.', 120, y);
       x.fillStyle = '#F4E7D0'; x.font = '700 36px Manrope, sans-serif'; x.fillText(trunc(x, b.bottle.name, 640), 190, y); x.textAlign = 'right'; x.fillStyle = '#F4BE5C'; x.fillText(sc(b.mean), W - 120, y); });
     x.textAlign = 'center'; x.fillStyle = '#A9AEB4'; x.font = '600 26px Manrope, sans-serif'; x.fillText(R.scorers + ' tasters \u00b7 ' + (e.bottles || []).length + ' blind pours', W / 2, H - 80);
@@ -682,7 +693,7 @@
     var n = e && (e.bottles || []).length ? e.bottles.length : (UI.printN || 6), codes = []; for (var i = 0; i < n; i++) codes.push(CO.letters(i));
     if (q.results && e && e.status === 'revealed') return vPrintResults(e);
     var vals = []; for (var x = sh.scale.min; x <= sh.scale.max + 1e-9; x += sh.scale.step) vals.push(Math.round(x * 100) / 100);
-    var head = '<div class="hdr"><div><b>Char &amp; Oak: A Whiskey Club</b><br><span>' + esc(e ? e.title : 'Blind tasting scoresheet') + (e && e.when ? ' \u00b7 ' + esc(fmtDay(e.when.start, true)) : '') + '</span></div><div>Name: ____________________</div></div>';
+    var head = '<div class="hdr"><img class="plogo" src="icons/logo-print.png" alt=""><div class="grow"><b>Char &amp; Oak: A Whiskey Club</b><br><span>' + esc(e ? e.title : 'Blind tasting scoresheet') + (e && e.when ? ' \u00b7 ' + esc(fmtDay(e.when.start, true)) : '') + '</span></div></div><div class="pname">Name: <span></span></div>';
     var block = function (c) {
       return '<div class="bt"><h3>Glass ' + c + '</h3>' + sh.categories.map(function (k) { return '<div class="crow"><span class="lb">' + esc(k.label) + (k.weight !== 1 ? ' \u00d7' + k.weight : '') + '</span>' + vals.map(function (v) { return '<span class="bx">' + v + '</span>'; }).join('') + '</div>'; }).join('')
         + (sh.tags ? '<div class="tg">' + CO.FAMILIES.map(function (f) { return f.tags.slice(0, 4).map(function (t) { return '<span>' + esc(t) + '</span>'; }).join(''); }).join('') + '</div>' : '')
@@ -698,7 +709,7 @@
   }
   function vPrintResults(e) {
     var R = CO.results(e, S.scores, S.members);
-    var h = '<div class="noprint"><button class="btn primary block" data-act="print">\uD83D\uDDA8 Print results</button><hr class="oak"></div><section class="ps"><div class="hdr"><div><b>' + esc(e.title) + '</b><br>' + esc(fmtDay(evDate(e), true)) + '</div><div>Char &amp; Oak: A Whiskey Club</div></div>'
+    var h = '<div class="noprint"><button class="btn primary block" data-act="print">\uD83D\uDDA8 Print results</button><hr class="oak"></div><section class="ps"><div class="hdr"><img class="plogo" src="icons/logo-print.png" alt=""><div class="grow"><b>' + esc(e.title) + '</b><br>' + esc(fmtDay(evDate(e), true)) + '</div><div>Char &amp; Oak: A Whiskey Club</div></div>'
       + R.ranked.map(function (b) { return '<div class="bt"><h3>' + b.rank + '. ' + esc(b.bottle.name) + ' (Glass ' + b.code + ') \u2014 ' + sc(b.mean) + '</h3><div class="small">' + esc([b.bottle.distillery, b.bottle.style, b.bottle.proof ? b.bottle.proof + ' proof' : ''].filter(Boolean).join(' \u00b7 ')) + ' \u00b7 ' + esc(b.verdict) + '</div>' + b.by.map(function (x) { return '<div class="small">' + esc(x.name) + ': <b>' + sc(x.score) + '</b>' + (x.note ? ' \u2014 ' + esc(x.note) : '') + '</div>'; }).join('') + '</div>'; }).join('') + '</section>';
     shell('', h, { back: 'a/' + e.id, full: true });
   }
@@ -871,7 +882,7 @@
 
   function welcome(msg) {
     document.body.classList.add('full');
-    app.innerHTML = '<div class="stage">' + LOGO.replace('width="44" height="44"', 'width="220" height="220"') + '<h1>Char &amp; Oak<br><span class="muted">A Whiskey Club</span></h1><p class="muted">' + msg + '</p><a class="btn primary" href="?demo=1">Try the demo</a></div>';
+    app.innerHTML = '<div class="stage">' + badge('big') + '<h1>A Whiskey Club</h1><p class="muted">' + msg + '</p><a class="btn primary" href="?demo=1">Try the demo</a></div>';
   }
   function boot() {
     if (!DEMO && !token) return welcome('This is a private club app. Open your personal link from Roni to come in.');
