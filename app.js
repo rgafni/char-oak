@@ -94,7 +94,7 @@
     ['archive', 'Archive', '<path d="M4 7h16v13H4zM2 3h20v4H2zM10 11h4"/>'],
     ['hall', 'Hall', '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>'],
     ['club', 'Club', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>']];
-  var TAB_OF = { home: 'home', meetings: 'meetings', m: 'meetings', live: 'meetings', archive: 'archive', a: 'archive', hall: 'hall', club: 'club', p: 'club', wish: 'club', admin: 'club', builder: 'club', me: 'club' };
+  var TAB_OF = { home: 'home', meetings: 'meetings', m: 'meetings', live: 'meetings', archive: 'archive', a: 'archive', hall: 'hall', club: 'club', p: 'club', wish: 'club', admin: 'club', builder: 'club', me: 'club', sheets: 'club', print: 'club' };
   var LOGO = '<img class="logo" src="icons/logo-160.png" alt="Char &amp; Oak" width="60" height="60">';
   var STARS = '<div class="stars" aria-hidden="true">\u2605 \u2605 \u2605</div>';
   function wheat(cls) {
@@ -133,7 +133,7 @@
     h += '<div class="sec"><h2>Explore</h2></div><div class="list">'
       + tile('hall', '\uD83C\uDFC6', 'Hall of Fame', 'Champions, leaderboards, palate twins')
       + tile('wish', '\uD83E\uDD43', 'Bottle wishlist', 'Suggest and vote on what to pour next')
-      + tile('print/default', '\uD83D\uDDA8\uFE0F', 'Print scoresheets', 'Paper sheets with blank lines')
+      + tile('sheets', '\uD83D\uDDA8\uFE0F', 'Print scoresheets', '5 paper designs to choose from')
       + tile('club', '\uD83E\uDDD1\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1', 'The members', active().length + ' tasters, palate stats and bias')
       + '</div>';
     shell('A Whiskey Club', h);
@@ -588,7 +588,7 @@
   function vClub() {
     var st = CO.stats(S), by = {}; st.members.forEach(function (m) { by[m.id] = m; });
     var h = '<h1>The Club</h1><div class="people">' + active().map(function (m) { var x = by[m.id] || {}; return '<button class="person" data-go="p/' + m.id + '">' + av(m) + '<b>' + esc(m.name) + '</b><span class="small muted">' + esc(x.n ? x.biasLabel : 'New palate') + '</span><span class="small dim">' + (x.attended || 0) + ' tastings</span></button>'; }).join('') + '</div>';
-    h += '<div class="sec"><h2>More</h2></div><div class="list">' + tile('wish', '\uD83E\uDD43', 'Bottle wishlist', 'Suggest and vote on the next pour') + tile('hall', '\uD83C\uDFC6', 'Hall of Fame', 'Champions and leaderboards') + tile('print/default', '\uD83D\uDDA8\uFE0F', 'Print blank scoresheets', 'With blank lines for notes')
+    h += '<div class="sec"><h2>More</h2></div><div class="list">' + tile('wish', '\uD83E\uDD43', 'Bottle wishlist', 'Suggest and vote on the next pour') + tile('hall', '\uD83C\uDFC6', 'Hall of Fame', 'Champions and leaderboards') + tile('sheets', '\uD83D\uDDA8\uFE0F', 'Print scoresheets', '5 paper designs to choose from')
       + tile('p/' + S.me.id, '\uD83D\uDC64', 'My profile', 'Photo, nickname, my palate') + (isAdmin() ? tile('admin', '\uD83D\uDD11', 'Admin', 'Members, private links, default scoresheet, settings') : '')
       + (window.AppInstall && AppInstall.visible() ? '<button class="item" data-act="install"><span class="medal">\uD83D\uDCF2</span><span class="grow"><span class="t">Install the app</span><br><span class="s">Put Char &amp; Oak on your home screen</span></span></button>' : '') + '</div>'
       + '<p class="small dim center">' + (DEMO ? 'Demo mode: made-up data, saved only in this browser.' : 'Private club app. Your link is personal; please don\u2019t share it.') + '</p>';
@@ -704,7 +704,7 @@
     for (var p = 0; p < codes.length; p += per) pages += '<section class="ps page">' + head + codes.slice(p, p + per).map(block).join('') + '<p class="small">Circle one number per row. Oak Score = weighted average of the categories, 0\u2013100.</p></section>';
     var h = '<div class="noprint"><h1>Print scoresheets</h1><p class="muted">Prints ' + n + ' glasses (' + per + ' per page), with blank lines for notes. Choose \u201cSave as PDF\u201d in the print dialog for a PDF.</p>'
       + (!e ? '<label class="f">How many glasses?</label><div class="chips">' + [3, 4, 5, 6, 8].map(function (k) { return '<button class="chip' + (k === n ? ' on' : '') + '" data-act="printN" data-n="' + k + '">' + k + '</button>'; }).join('') + '</div>' : '')
-      + '<button class="btn primary block" data-act="print">\uD83D\uDDA8 Print / Save as PDF</button>' + (e && e.canHost ? '<p class="small muted">After the tasting, type paper sheets in from the live board.</p>' : '') + '<hr class="oak"></div>' + pages;
+      + '<button class="btn primary block" data-act="print">\uD83D\uDDA8 Print / Save as PDF</button><button class="btn block" data-go="sheets">More designs: 5 printable scoresheets</button>' + (e && e.canHost ? '<p class="small muted">After the tasting, type paper sheets in from the live board.</p>' : '') + '<hr class="oak"></div>' + pages;
     shell('', h, { back: e ? 'm/' + e.id : 'club', full: true });
   }
   function vPrintResults(e) {
@@ -712,6 +712,61 @@
     var h = '<div class="noprint"><button class="btn primary block" data-act="print">\uD83D\uDDA8 Print results</button><hr class="oak"></div><section class="ps"><div class="hdr"><img class="plogo" src="icons/logo-print.png" alt=""><div class="grow"><b>' + esc(e.title) + '</b><br>' + esc(fmtDay(evDate(e), true)) + '</div><div>Char &amp; Oak: A Whiskey Club</div></div>'
       + R.ranked.map(function (b) { return '<div class="bt"><h3>' + b.rank + '. ' + esc(b.bottle.name) + ' (Glass ' + b.code + ') \u2014 ' + sc(b.mean) + '</h3><div class="small">' + esc([b.bottle.distillery, b.bottle.style, b.bottle.proof ? b.bottle.proof + ' proof' : ''].filter(Boolean).join(' \u00b7 ')) + ' \u00b7 ' + esc(b.verdict) + '</div>' + b.by.map(function (x) { return '<div class="small">' + esc(x.name) + ': <b>' + sc(x.score) + '</b>' + (x.note ? ' \u2014 ' + esc(x.note) : '') + '</div>'; }).join('') + '</div>'; }).join('') + '</section>';
     shell('', h, { back: 'a/' + e.id, full: true });
+  }
+
+  /* ---------- SCORESHEET DESIGNS (5 printable styles) ---------- */
+  var SD_NAMES = [['classic', 'Classic', 'Nose, palate & finish 1\u201310 per glass'], ['minimal', 'Minimal quick-score', 'One line per glass: score + rank'], ['wheel', 'Tasting wheel', 'Aroma & flavor checkboxes, color, proof & price guess'], ['h2h', 'Head-to-head', 'Rank, favorite, matchups & match the reveal list'], ['social', 'Fun & social', 'Glass ratings, superlatives, quote of the night']];
+  function sdInit() {
+    if (UI.sd) return UI.sd;
+    var e = upcoming()[0], d = e ? evDate(e) : '';
+    UI.sd = { n: e && (e.bottles || []).length ? e.bottles.length : 6, title: e ? e.title : 'Blind Tasting', date: d ? d.slice(0, 10) : '', from: e ? e.title : '' };
+    return UI.sd;
+  }
+  function sdDate(d) { if (!d) return ''; try { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }); } catch (x) { return d; } }
+  var GLASS = '<svg class="gi" viewBox="0 0 24 30" aria-hidden="true"><path d="M5 3h14l-1.6 10.5A5.5 5.5 0 0 1 12 18a5.5 5.5 0 0 1-5.4-4.5z M12 18v7 M7 27h10" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  function sdBuild(kind, st) {
+    var codes = []; for (var i = 0; i < st.n; i++) codes.push(CO.letters(i));
+    var head = function (sub) { return '<div class="sd-hd"><img src="icons/logo-print.png" alt=""><div class="grow"><div class="sd-club">Char &amp; Oak</div><div class="sd-tag">A Whiskey Club \u00b7 ' + sub + '</div></div><div class="sd-ev"><b>' + esc(st.title || 'Blind Tasting') + '</b><br>' + esc(sdDate(st.date)) + '</div></div><div class="sd-rule">\u2605 \u2605 \u2605</div><div class="sd-name">Taster <span></span></div>'; };
+    var page = function (sub, body, foot) { return '<section class="sd-pg">' + head(sub) + body + '<div class="sd-ft">' + (foot || '') + '</div></section>'; };
+    var dots = function (a, b) { var s = ''; for (var x = a; x <= b; x++) s += '<i>' + x + '</i>'; return '<span class="sd-dots">' + s + '</span>'; };
+    var lines = function (k) { var s = ''; for (var j = 0; j < k; j++) s += '<div class="sd-ln"></div>'; return s; };
+    var chunk = function (per, fn, sub, foot) { var out = ''; for (var p = 0; p < codes.length; p += per) out += page(sub + (codes.length > per ? ' \u00b7 page ' + (p / per + 1) + ' of ' + Math.ceil(codes.length / per) : ''), codes.slice(p, p + per).map(fn).join(''), foot); return out; };
+    if (kind === 'classic') return chunk(3, function (c) {
+      return '<div class="sd-box"><div class="sd-let">' + c + '</div><div class="grow">' + ['Nose', 'Palate', 'Finish'].map(function (l) { return '<div class="sd-row"><b>' + l + '</b>' + dots(1, 10) + '</div>'; }).join('')
+        + '<div class="sd-row"><b>Overall</b><span class="sd-blank sm"></span> / 10</div><div class="sd-lbl">Notes</div>' + lines(2) + '<div class="sd-row"><b>My guess</b><span class="sd-blank"></span></div></div></div>';
+    }, 'Classic Scoresheet', 'Circle one number per row. Overall is your gut call, not an average.');
+    if (kind === 'minimal') return page('Quick Score', '<table class="sd-tbl"><thead><tr><th>Glass</th><th>Score <small>(1\u201310)</small></th><th>Rank</th><th>One word</th></tr></thead><tbody>' + codes.map(function (c) { return '<tr><td class="sd-l">' + c + '</td><td></td><td></td><td></td></tr>'; }).join('') + '</tbody></table>', 'Rank 1 = your favorite. No ties.');
+    if (kind === 'wheel') {
+      var cb = function (l) { return l.map(function (t) { return '<span class="sd-cb">' + t + '</span>'; }).join(''); };
+      return chunk(2, function (c) {
+        return '<div class="sd-box"><div class="sd-let">' + c + '</div><div class="grow"><div class="sd-sub">Color</div><div class="sd-cbs">' + cb(['Straw', 'Gold', 'Amber', 'Copper', 'Mahogany']) + '</div>'
+          + '<div class="sd-sub">Aroma</div><div class="sd-cbs">' + cb(['Fruit', 'Citrus', 'Dried fruit', 'Floral', 'Spice', 'Pepper', 'Oak', 'Smoke', 'Peat', 'Sweet', 'Caramel', 'Vanilla', 'Honey', 'Grain', 'Nutty', 'Chocolate', 'Leather', 'Herbal']) + '</div>'
+          + '<div class="sd-sub">Flavor</div><div class="sd-cbs">' + cb(['Fruit', 'Spice', 'Oak', 'Smoke', 'Sweet', 'Bitter', 'Salty', 'Creamy', 'Hot', 'Dry', 'Oily', 'Thin']) + '</div>'
+          + '<div class="sd-sub">Finish</div><div class="sd-cbs">' + cb(['Short', 'Medium', 'Long', 'Lingering']) + '</div>'
+          + '<div class="sd-row"><b>Proof guess</b><span class="sd-blank sm"></span><b>Price guess $</b><span class="sd-blank sm"></span><b>Score</b><span class="sd-blank sm"></span>/10</div></div></div>';
+      }, 'Tasting Wheel', 'Check every box you notice. Proof and price guesses earn bragging rights at the reveal.');
+    }
+    if (kind === 'h2h') {
+      var rank = codes.map(function (c, i) { return '<div class="sd-rk"><span class="sd-n">' + (i + 1) + '</span><span class="sd-blank sm"></span></div>'; }).join('');
+      var pairs = []; for (var a = 0; a < codes.length; a++) for (var b = a + 1; b < codes.length; b++) pairs.push('<span class="sd-mu"><i>' + codes[a] + '</i> vs <i>' + codes[b] + '</i></span>');
+      var rev = codes.map(function () { return '<div class="sd-rv"><span class="sd-blank"></span><span>is glass</span><span class="sd-sq"></span></div>'; }).join('');
+      return page('Head-to-Head', '<div class="sd-2c"><div><div class="sd-sub">My ranking (write the letter)</div>' + rank + '<div class="sd-fav">My favorite: <span class="sd-sq big"></span></div></div><div><div class="sd-sub">Reveal list \u2192 which glass?</div><p class="sd-tiny">Copy the bottle names as the host reads them, then write the letter you think each one is.</p>' + rev + '</div></div>'
+        + (pairs.length <= 45 ? '<div class="sd-sub">Matchups \u00b7 circle the winner</div><div class="sd-mus">' + pairs.join('') + '</div>' : ''), 'Matchups settle ties. One point per correct match on the reveal list.');
+    }
+    var gl = ''; for (var g = 0; g < 5; g++) gl += GLASS;
+    var sup = ['Best value', 'Crowd pleaser', 'Most surprising', 'Smokiest', 'Would gift it', 'Biggest disappointment', 'Pairs with a cigar', 'Takes me back'];
+    return page('Party Sheet', '<div class="sd-sub">Rate each glass \u00b7 fill in the glasses (1\u20135)</div>' + codes.map(function (c) { return '<div class="sd-gr"><span class="sd-l">' + c + '</span><span class="sd-gls">' + gl + '</span><span class="sd-blank"></span></div>'; }).join('')
+      + '<div class="sd-sub">Superlatives \u00b7 write a letter</div><div class="sd-sups">' + sup.map(function (s) { return '<div><span class="sd-sq"></span>' + s + '</div>'; }).join('') + '</div>'
+      + '<div class="sd-sub">Quote of the night</div><div class="sd-quote">\u201c<span></span>\u201d<div class="sd-who">\u2014 <span class="sd-blank"></span></div></div>', 'Cheers. Drink responsibly and get home safe.');
+  }
+  function vSheets() {
+    var st = sdInit();
+    var h = '<div class="noprint"><p class="eyebrow">Printable</p><h1>Scoresheet designs</h1><p class="muted">Five different paper sheets. Pick one and print it, in black and white on US Letter. Choose \u201cSave as PDF\u201d in the print dialog for a PDF.' + (st.from ? ' Pre-filled from \u201c' + esc(st.from) + '\u201d.' : '') + '</p>'
+      + '<div class="card"><label class="f" for="sd-title">Tasting name</label><input id="sd-title" data-sd="title" value="' + esc(st.title) + '" maxlength="60"><label class="f" for="sd-date">Date</label><input id="sd-date" type="date" data-sd="date" value="' + esc(st.date) + '">'
+      + '<label class="f">How many bottles?</label><div class="chips">' + [3, 4, 5, 6, 7, 8, 10, 12].map(function (k) { return '<button class="chip' + (k === st.n ? ' on' : '') + '" data-act="sdN" data-n="' + k + '">' + k + '</button>'; }).join('') + '</div></div></div>'
+      + '<div class="sd-grid">' + SD_NAMES.map(function (d, i) { return '<div class="sd-card" id="sd-' + d[0] + '"><div class="noprint sd-cap"><div class="grow"><b>' + (i + 1) + '. ' + d[1] + '</b><br><small class="muted">' + d[2] + '</small></div><button class="btn primary sm" data-act="sdPrint" data-k="' + d[0] + '">\uD83D\uDDA8 Print</button></div><div class="sd-prev">' + sdBuild(d[0], st) + '</div></div>'; }).join('') + '</div>';
+    shell('', h, { back: 'club', full: true });
+    $$('[data-sd]').forEach(function (inp) { inp.addEventListener('change', function () { st[inp.getAttribute('data-sd')] = inp.value; render(true); }); });
   }
 
   /* ---------- calendar ---------- */
@@ -751,6 +806,7 @@
       case 'admin': vAdmin(); break;
       case 'builder': vBuilder(r.id); break;
       case 'print': vPrint(r.id, r.q); break;
+      case 'sheets': vSheets(); break;
       default: notFound();
     }
     window.scrollTo(0, y);
@@ -851,6 +907,8 @@
       p.then(function () { toast('Scoresheet saved'); UI.builder = null; return refresh(); }).then(function () { go(B.scope === 'default' ? 'admin' : 'm/' + B.scope); }).catch(function (e) { toast(errMsg(e)); }); },
     printN: function (d) { UI.printN = +d.n; render(true); },
     print: function () { window.print(); },
+    sdN: function (d) { UI.sd.n = +d.n; render(true); },
+    sdPrint: function (d) { document.body.setAttribute('data-sdp', d.k); var done = function () { document.body.removeAttribute('data-sdp'); window.removeEventListener('afterprint', done); }; window.addEventListener('afterprint', done); window.print(); setTimeout(done, 1500); },
     install: function () { if (window.AppInstall) AppInstall.install(); },
     demoAs: function () { modal('<h2>Demo: be someone else</h2><p class="muted">Try the app as any member. Only in this browser tab.</p><div class="list">' + (S.members || []).map(function (m) { return '<button class="item" data-as="' + m.id + '">' + av(m, 'sm') + '<span class="grow t">' + esc(m.name) + (m.role === 'admin' ? ' (admin)' : '') + '</span></button>'; }).join('') + '</div>', function (el, close) { $$('[data-as]', el).forEach(function (b) { b.onclick = function () { sessionStorage.setItem('co.demo.as', b.getAttribute('data-as')); close(); UI.live = {}; refresh(); }; }); }); },
     demoReset: function () { Demo.reset(); UI.live = {}; refresh().then(function () { go(''); }); }
