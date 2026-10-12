@@ -57,7 +57,7 @@
   function paint(root) {
     $$('[data-c]', root).forEach(function (el) { el.style.setProperty('--c', el.getAttribute('data-c')); });
     $$('[data-fam]', root).forEach(function (el) { el.style.setProperty('--fam', el.getAttribute('data-fam')); });
-    $$('[data-w]', root).forEach(function (el) { el.style.width = Math.max(0, Math.min(100, +el.getAttribute('data-w'))) + '%'; });
+    $$('[data-w]', root).forEach(function (el) { el.style.width = Math.max(0, Math.min(100, +el.getAttribute('data-w'))) + '%'; }); $$('[data-l]', root).forEach(function (el) { el.style.left = Math.max(0, Math.min(100, +el.getAttribute('data-l'))) + '%'; });
     $$('[data-bg]', root).forEach(function (el) { el.style.background = el.getAttribute('data-bg'); });
   }
 
@@ -128,7 +128,7 @@
     if (next) h += nextCard(next);
     else if (!live) h += '<div class="card"><p class="eyebrow">Next meeting</p><p class="muted">Nothing planned yet.</p>' + (isAdmin() ? '<button class="btn primary block" data-go="meetings/new">Plan the next meeting</button>' : '<p class="small dim">Roni will post dates soon. Meanwhile, vote on what to pour next.</p><button class="btn block" data-go="wish">Bottle wishlist</button>') + '</div>';
     if (last) { var R = CO.results(last, S.scores, S.members), w = R.winner;
-      if (w) h += '<div class="card glow champ">' + wheat('l') + wheat('r') + '<p class="eyebrow">Last champion \u00b7 ' + esc(fmtDay(evDate(last))) + '</p><div class="row"><div class="crown" aria-hidden="true">\uD83D\uDC51</div><div class="grow"><h2>' + esc(w.bottle.name) + '</h2><p class="muted small">' + esc([w.bottle.distillery, w.bottle.style, w.bottle.proof ? w.bottle.proof + ' proof' : ''].filter(Boolean).join(' \u00b7 ')) + '</p></div><div class="oakscore">' + sc(w.mean) + '</div></div><button class="btn block" data-go="a/' + last.id + '">See the full results</button></div>'; }
+      if (w) h += '<div class="card glow champ">' + wheat('l') + wheat('r') + '<p class="eyebrow">Last champion \u00b7 ' + esc(fmtDay(evDate(last))) + '</p><div class="row"><div class="crown" aria-hidden="true">\uD83D\uDC51</div><div class="grow"><h2>' + esc(w.bottle.name) + '</h2><p class="muted small">' + esc([w.bottle.distillery, w.bottle.style, w.bottle.proof ? w.bottle.proof + ' proof' : ''].filter(Boolean).join(' \u00b7 ')) + '</p></div>' + (R.rankOnly ? '' : '<div class="oakscore">' + sc(w.mean) + '</div>') + '</div><button class="btn block" data-go="a/' + last.id + '">See the full results</button></div>'; }
     h += '<div class="grid3"><div class="stat"><b>' + st.events + '</b><span>tastings</span></div><div class="stat"><b>' + st.bottles.length + '</b><span>bottles judged</span></div><div class="stat"><b>' + (st.clubAvg == null ? '\u2013' : sc(st.clubAvg)) + '</b><span>club average</span></div></div>';
     h += '<div class="sec"><h2>Explore</h2></div><div class="list">'
       + tile('hall', '\uD83C\uDFC6', 'Hall of Fame', 'Champions, leaderboards, palate twins')
@@ -427,22 +427,18 @@
     Object.keys(years).sort().reverse().forEach(function (y) {
       h += '<div class="sec"><h2>' + esc(y) + '</h2></div><div class="list">' + years[y].map(function (e) {
         var R = CO.results(e, S.scores, S.members), w = R.winner, cov = e.cover || ((e.photos || [])[0] || {}).id;
-        return '<button class="card ev item" data-go="a/' + e.id + '"><span class="cov">' + (cov ? '<img alt="" data-photo="' + e.id + '|' + cov + '">' : '\uD83E\uDD43') + '</span><span class="bd"><span class="small muted">' + esc(fmtDay(evDate(e), true)) + '</span><br><span class="t">' + esc(e.title) + '</span><br><span class="s">\uD83D\uDC51 ' + esc(w ? w.bottle.name + ' \u00b7 ' + sc(w.mean) : 'No winner') + '</span><br><span class="s">' + (e.bottles || []).length + ' bottles \u00b7 ' + R.scorers + ' tasters' + ((e.photos || []).length ? ' \u00b7 ' + e.photos.length + ' photos' : '') + '</span></span></button>';
+        return '<button class="card ev item" data-go="a/' + e.id + '"><span class="cov">' + (cov ? '<img alt="" data-photo="' + e.id + '|' + cov + '">' : '\uD83E\uDD43') + '</span><span class="bd"><span class="small muted">' + esc(fmtDay(evDate(e), true)) + '</span><br><span class="t">' + esc(e.title) + '</span><br><span class="s">\uD83D\uDC51 ' + esc(w ? w.bottle.name + (R.rankOnly ? ' \u00b7 ranked 1st' : ' \u00b7 ' + sc(w.mean) + ' / 10') : 'No winner') + '</span><br><span class="s">' + (e.bottles || []).length + ' bottles \u00b7 ' + (R.rankOnly || R.scorers < 2 ? ((e.attendees || []).length ? e.attendees.length + ' tasters' : 'club result') : R.scorers + ' tasters') + ((e.photos || []).length ? ' \u00b7 ' + e.photos.length + ' photos' : '') + '</span></span></button>';
       }).join('') + '</div>';
     });
     shell('Archive', h); loadPhotos();
   }
   function hbars(rows, max) {
-    var W = 340, bh = 48, H = rows.length * bh + 4, bw = W - 30 - 56;
-    return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Scores">' + rows.map(function (r, i) {
-      var y = i * bh + 2, sx = function (v) { return (30 + Math.max(0, v) / (max || 100) * bw).toFixed(1); }, w = Math.max(2, r.v / (max || 100) * bw);
-      return '<text x="0" y="' + (y + 38) + '" fill="#F4BE5C" font-size="22" font-family="Cormorant, serif" font-weight="700">' + esc(r.code) + '</text>'
-        + '<text x="30" y="' + (y + 14) + '" fill="#C9B293" font-size="13" font-weight="700">' + esc(r.name || '') + '</text>'
-        + '<rect x="30" y="' + (y + 22) + '" width="' + bw + '" height="20" rx="6" fill="#1A110B"/>'
-        + '<rect x="30" y="' + (y + 22) + '" width="' + w.toFixed(1) + '" height="20" rx="6" fill="' + (i === 0 ? '#E0A03A' : '#8a5a2b') + '"/>'
-        + (r.lo != null ? '<line x1="' + sx(r.lo) + '" x2="' + sx(r.hi) + '" y1="' + (y + 32) + '" y2="' + (y + 32) + '" stroke="#F4E7D0" stroke-opacity=".6" stroke-width="2"/><circle cx="' + sx(r.lo) + '" cy="' + (y + 32) + '" r="2.5" fill="#F4E7D0"/><circle cx="' + sx(r.hi) + '" cy="' + (y + 32) + '" r="2.5" fill="#F4E7D0"/>' : '')
-        + '<text x="' + W + '" y="' + (y + 38) + '" text-anchor="end" fill="#F4E7D0" font-size="17" font-weight="800">' + esc(r.label) + '</text>';
-    }).join('') + '</svg>';
+    max = max || 10;
+    return '<div class="hb" role="list">' + rows.map(function (r, i) {
+      var pct = function (v) { return Math.max(0, Math.min(100, v / max * 100)).toFixed(1); };
+      return '<div class="hb-row' + (i === 0 ? ' top' : '') + '" role="listitem"><span class="hb-code">' + esc(r.code) + '</span><div class="hb-main"><button type="button" class="hb-name" data-act="hbName" title="' + esc(r.name || '') + '">' + esc(r.name || '') + '</button>'
+        + (r.v != null ? '<div class="hb-track"><i data-w="' + pct(r.v) + '"></i>' + (r.lo != null ? '<b class="hb-rng" data-l="' + pct(r.lo) + '" data-w="' + (pct(r.hi) - pct(r.lo)).toFixed(1) + '"></b>' : '') + '</div>' : '') + '</div><span class="hb-val">' + esc(r.label) + '</span></div>';
+    }).join('') + '</div>';
   }
   function wheel(fam) {
     var tot = 0; CO.FAMILIES.forEach(function (f) { tot += fam[f.k] || 0; }); if (!tot) return '';
@@ -458,7 +454,7 @@
     var ks = Object.keys(tags).sort(function (a, b) { return tags[b] - tags[a]; }), mx = ks.length ? tags[ks[0]] : 1;
     return ks.length ? '<div class="cloud">' + ks.slice(0, 18).map(function (t) { var s = 1 + Math.round((tags[t] / mx) * 3); return '<span class="s' + Math.min(4, s) + '" data-fam="' + famColor(t) + '">' + esc(t) + '</span>'; }).join('') + '</div>' : '<p class="small dim">No flavor tags.</p>';
   }
-  function heat(v) { if (v == null) return ''; var k = Math.max(0, Math.min(1, (v - 40) / 60)); return 'rgba(224,160,58,' + (0.12 + k * 0.75).toFixed(2) + ')'; }
+  function heat(v) { if (v == null) return ''; var k = Math.max(0, Math.min(1, (v - 4) / 6)); return 'rgba(224,160,58,' + (0.12 + k * 0.75).toFixed(2) + ')'; }
   function vArchiveDetail(id) {
     var e = ev(id); if (!e) return notFound();
     if (e.status !== 'revealed') return go('m/' + id);
@@ -466,23 +462,23 @@
     var h = '<p class="eyebrow">' + esc(fmtDay(evDate(e), true)) + (e.host ? ' \u00b7 hosted by ' + esc(nameOf(e.host)) : '') + '</p><h1>' + esc(e.title) + '</h1>' + (e.theme ? '<p class="muted">' + esc(e.theme) + '</p>' : '');
     if ((e.attendees || []).length) h += '<p class="small muted">\uD83E\uDD43 At the table: ' + e.attendees.map(function (x) { var m = member(x); return esc(/^g:/.test(x) ? x.slice(2) : m ? m.name + (m.left ? ' (past member)' : '') : 'Someone'); }).join(', ') + '</p>';
     if (e.imported) h += '<p class="small dim">\uD83D\uDCDC ' + esc(e.imported) + '</p>';
-    if (w) h += '<div class="card glow center champ">' + wheat('l') + wheat('r') + STARS + '<div class="crown" aria-hidden="true">\uD83D\uDC51</div><p class="eyebrow">Champion of the night \u00b7 Glass ' + w.code + '</p><h2>' + esc(w.bottle.name) + '</h2><p class="muted small">' + esc([w.bottle.distillery, w.bottle.line, w.bottle.style, w.bottle.proof ? w.bottle.proof + ' proof' : '', w.bottle.age, w.bottle.price].filter(Boolean).join(' \u00b7 ')) + '</p><div class="oakscore">' + sc(w.mean) + '</div><p class="small muted">Oak Score \u00b7 ' + w.n + ' tasters \u00b7 ' + esc(w.verdict) + '</p><div class="btns"><button class="btn primary" data-act="shareCard" data-id="' + id + '">Share results card</button><button class="btn" data-act="replay" data-id="' + id + '">Replay the reveal</button></div></div>';
+    if (w) h += '<div class="card glow center champ">' + wheat('l') + wheat('r') + STARS + '<div class="crown" aria-hidden="true">\uD83D\uDC51</div><p class="eyebrow">Champion of the night \u00b7 Glass ' + w.code + '</p><h2>' + esc(w.bottle.name) + '</h2><p class="muted small">' + esc([w.bottle.distillery, w.bottle.line, w.bottle.style, w.bottle.proof ? w.bottle.proof + ' proof' : '', w.bottle.age, w.bottle.price].filter(Boolean).join(' \u00b7 ')) + '</p>' + (R.rankOnly ? '<p class="small muted">Ranked 1st \u00b7 no scores were recorded that night</p>' : '<div class="oakscore">' + sc(w.mean) + '<small> / 10</small></div><p class="small muted">Average score \u00b7 ' + (w.n > 1 ? w.n + ' tasters \u00b7 ' + esc(w.verdict) : 'club result') + '</p>') + '<div class="btns"><button class="btn primary" data-act="shareCard" data-id="' + id + '">Share results card</button><button class="btn" data-act="replay" data-id="' + id + '">Replay the reveal</button></div></div>';
     h += '<div class="seg" role="tablist">' + [['results', 'Results'], ['notes', 'Notes'], ['scores', 'Scores'], ['photos', 'Photos' + ((e.photos || []).length ? ' (' + e.photos.length + ')' : '')]].map(function (s) { return '<button role="tab" class="' + (seg === s[0] ? 'on' : '') + '" data-act="seg" data-id="a' + id + '" data-s="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>';
     if (seg === 'results') {
-      h += '<div class="card"><h3>The standings</h3>' + hbars(R.ranked.map(function (b) { return { code: b.code, v: b.mean, lo: b.min, hi: b.max, label: sc(b.mean), name: (b.bottle.name || '').slice(0, 34) }; }), 100) + '<p class="small dim">Bar = average Oak Score. Line = lowest to highest score.</p></div>';
-      if (R.consensus && R.controversial && R.consensus !== R.controversial) h += '<div class="grid2"><div class="stat"><span>\uD83E\uDD1D Consensus pick</span><b>' + R.consensus.code + '</b><span>' + esc(R.consensus.bottle.name) + ' \u00b7 spread \u00b1' + sc(R.consensus.sd) + '</span></div><div class="stat"><span>\u26A1 Most controversial</span><b>' + R.controversial.code + '</b><span>' + esc(R.controversial.bottle.name) + ' \u00b7 spread \u00b1' + sc(R.controversial.sd) + '</span></div></div>';
+      h += '<div class="card"><h3>The standings</h3>' + hbars(R.ranked.map(function (b) { return R.rankOnly ? { code: ordinal(b.rank), v: null, label: '', name: b.bottle.name || '' } : { code: b.code, v: b.mean, lo: b.n > 1 ? b.min : null, hi: b.max, label: sc(b.mean), name: b.bottle.name || '' }; }), 10) + '<p class="small dim">' + (R.rankOnly ? 'Final ranking only. No scores were recorded that night.' : 'Bar = average score out of 10. Line = lowest to highest score.') + '</p></div>';
+      if (!R.rankOnly && R.consensus && R.controversial && R.consensus !== R.controversial) h += '<div class="grid2"><div class="stat"><span>\uD83E\uDD1D Consensus pick</span><b>' + R.consensus.code + '</b><span>' + esc(R.consensus.bottle.name) + ' \u00b7 spread \u00b1' + sc(R.consensus.sd) + '</span></div><div class="stat"><span>\u26A1 Most controversial</span><b>' + R.controversial.code + '</b><span>' + esc(R.controversial.bottle.name) + ' \u00b7 spread \u00b1' + sc(R.controversial.sd) + '</span></div></div>';
       h += R.ranked.concat(R.bottles.filter(function (b) { return !b.n; })).map(function (b) {
-        return '<div class="card"><div class="rankrow"><span class="n">' + (b.rank || '\u2013') + '</span><div class="grow"><b>' + esc(b.bottle.name) + '</b> <span class="pill">' + b.code + '</span><br><span class="small muted">' + esc([b.bottle.distillery, b.bottle.style, b.bottle.proof ? b.bottle.proof + ' proof' : '', b.bottle.age, b.bottle.price].filter(Boolean).join(' \u00b7 ')) + '</span></div><div class="oakscore">' + sc(b.mean) + '</div></div>'
-          + '<p class="small"><span class="pill ' + (b.verdict === 'Consensus' ? 'ok' : b.verdict === 'Controversial' ? 'ember' : '') + '">' + esc(b.verdict || 'No scores') + '</span> <span class="muted">median ' + sc(b.median) + ' \u00b7 range ' + sc(b.min) + '\u2013' + sc(b.max) + '</span></p>'
-          + e.sheet.categories.map(function (c) { var v = b.cats[c.k], pct = v == null ? 0 : (v - e.sheet.scale.min) / ((e.sheet.scale.max - e.sheet.scale.min) || 1) * 100; return '<div class="row small"><span class="grow" >' + esc(c.label) + '</span><span class="grow"><div class="bar"><i data-w="' + pct + '"></i></div></span><b>' + (v == null ? '\u2013' : v) + '</b></div>'; }).join('')
-          + (b.bottle.notes ? '<p class="note"><b>Host:</b> ' + esc(b.bottle.notes) + '</p>' : '') + wheel(b.families) + cloud(b.tags) + '</div>';
+        return '<div class="card"><div class="rankrow"><span class="n">' + (b.rank || '\u2013') + '</span><div class="grow"><b>' + esc(b.bottle.name) + '</b> <span class="pill">' + b.code + '</span><br><span class="small muted">' + esc([b.bottle.distillery, b.bottle.style, b.bottle.proof ? b.bottle.proof + ' proof' : '', b.bottle.age, b.bottle.price].filter(Boolean).join(' \u00b7 ')) + '</span></div>' + (R.rankOnly ? '' : '<div class="oakscore">' + sc(b.mean) + '</div>') + '</div>'
+          + (R.rankOnly ? '' : b.n > 1 ? '<p class="small"><span class="pill ' + (b.verdict === 'Consensus' ? 'ok' : b.verdict === 'Controversial' ? 'ember' : '') + '">' + esc(b.verdict || 'No scores') + '</span> <span class="muted">median ' + sc(b.median) + ' \u00b7 range ' + sc(b.min) + '\u2013' + sc(b.max) + '</span></p>' : '<p class="small muted">Club average from the recap</p>')
+          + (R.rankOnly || e.sheet.categories.length < 2 ? [] : e.sheet.categories).map(function (c) { var v = b.cats[c.k], pct = v == null ? 0 : (v - e.sheet.scale.min) / ((e.sheet.scale.max - e.sheet.scale.min) || 1) * 100; return '<div class="row small"><span class="grow" >' + esc(c.label) + '</span><span class="grow"><div class="bar"><i data-w="' + pct + '"></i></div></span><b>' + (v == null ? '\u2013' : v) + '</b></div>'; }).join('')
+          + (b.bottle.notes ? '<p class="note"><b>Host:</b> ' + esc(b.bottle.notes) + '</p>' : '') + (e.sheet.tags === false ? '' : wheel(b.families) + cloud(b.tags)) + '</div>';
       }).join('');
       var G = Object.keys(R.guess).map(function (k) { return R.guess[k]; }).sort(function (a, b) { return b.pts - a.pts; });
-      if (G.length) h += '<div class="card"><h3>\uD83C\uDFAF Guess the bottle</h3><div class="list">' + G.map(function (g, i) { return '<div class="item"><span class="medal">' + (['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'][i] || '') + '</span><span class="grow t">' + esc(g.name) + '</span><b>' + g.pts + ' pts</b></div>'; }).join('') + '</div></div>';
+      if (G.length && G.some(function (g) { return g.pts; })) h += '<div class="card"><h3>\uD83C\uDFAF Guess the bottle</h3><div class="list">' + G.map(function (g, i) { return '<div class="item"><span class="medal">' + (['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'][i] || '') + '</span><span class="grow t">' + esc(g.name) + '</span><b>' + g.pts + ' pts</b></div>'; }).join('') + '</div></div>';
     } else if (seg === 'notes') {
       h += R.ranked.concat(R.bottles.filter(function (b) { return !b.n; })).map(function (b) {
         return '<div class="card"><h3>' + b.code + ' \u00b7 ' + esc(b.bottle.name) + '</h3>' + (b.by.length ? b.by.map(function (x) {
-          return '<div class="note"><div class="row between"><b>' + esc(x.name) + (x.paper ? ' \uD83D\uDCC4' : '') + '</b><b>' + sc(x.score) + '</b></div>' + (x.note ? '<div>' + esc(x.note) + '</div>' : '') + (x.tags.length ? '<div class="small muted">' + x.tags.map(esc).join(' \u00b7 ') + '</div>' : '') + '</div>';
+          return '<div class="note"><div class="row between"><b>' + esc(x.name) + (x.paper ? ' \uD83D\uDCC4' : '') + '</b><b>' + (R.rankOnly ? ordinal(Math.round(e.sheet.scale.max + 1 - x.score * e.sheet.scale.max / 10)) : sc(x.score)) + '</b></div>' + (x.note ? '<div>' + esc(x.note) + '</div>' : '') + (x.tags.length ? '<div class="small muted">' + x.tags.map(esc).join(' \u00b7 ') + '</div>' : '') + '</div>';
         }).join('') : '<p class="dim">No notes.</p>') + '</div>';
       }).join('');
     } else if (seg === 'scores') {
@@ -490,8 +486,8 @@
       var ids = Object.keys(scorers);
       h += '<div class="card scroll-x"><h3>Who gave what</h3><table class="mx"><thead><tr><th>Taster</th>' + R.bottles.map(function (b) { return '<th>' + b.code + '</th>'; }).join('') + '<th>Avg</th></tr></thead><tbody>' + ids.map(function (sid) {
         var vals = [];
-        return '<tr><td>' + esc(scorers[sid]) + '</td>' + R.bottles.map(function (b) { var x = b.by.filter(function (y) { return y.scorer === sid; })[0]; if (x) vals.push(x.score); return '<td class="h" data-bg="' + (x ? heat(x.score) : '') + '">' + (x ? Math.round(x.score) : '\u2013') + '</td>'; }).join('') + '<td><b>' + sc(CO.mean(vals)) + '</b></td></tr>';
-      }).join('') + '<tr><td><b>Club</b></td>' + R.bottles.map(function (b) { return '<td><b>' + (b.mean == null ? '\u2013' : Math.round(b.mean)) + '</b></td>'; }).join('') + '<td></td></tr></tbody></table></div>';
+        return '<tr><td>' + esc(scorers[sid]) + '</td>' + R.bottles.map(function (b) { var x = b.by.filter(function (y) { return y.scorer === sid; })[0]; if (x) vals.push(x.score); return '<td class="h" data-bg="' + (x && !R.rankOnly ? heat(x.score) : '') + '">' + (x ? (R.rankOnly ? ordinal(Math.round(e.sheet.scale.max + 1 - x.score * e.sheet.scale.max / 10)) : sc(x.score)) : '\u2013') + '</td>'; }).join('') + '<td><b>' + (R.rankOnly ? '' : sc(CO.mean(vals))) + '</b></td></tr>';
+      }).join('') + '<tr><td><b>Club</b></td>' + R.bottles.map(function (b) { return '<td><b>' + (b.mean == null ? '\u2013' : R.rankOnly ? ordinal(b.rank) : sc(b.mean)) + '</b></td>'; }).join('') + '<td></td></tr></tbody></table></div>';
       if (e.canHost) h += '<div class="card"><h3>Fix or add a sheet</h3><select id="pps">' + memberOptions('', 'Choose a taster\u2026') + '<option value="__guest">A guest\u2026</option>' + ids.filter(function (s) { return /^g:/.test(s); }).map(function (s) { return '<option value="' + esc(s) + '">' + esc(scorers[s]) + ' (guest)</option>'; }).join('') + '</select><button class="btn block" data-act="paper" data-id="' + id + '">Edit their scores</button>'
         + (isAdmin() ? '<div class="btns"><button class="btn danger sm" data-act="status" data-id="' + id + '" data-s="live">Re-open scoring (un-reveal)</button><button class="btn sm" data-go="print/' + id + '?results=1">Print results</button></div>' : '') + '</div>';
     } else {
@@ -550,21 +546,29 @@
     for (var i = 0; i < 40; i++) { x.strokeStyle = 'rgba(120,90,55,' + (0.04 + Math.random() * .05) + ')'; x.lineWidth = 2; x.beginPath(); var yy = i * 36; x.moveTo(0, yy); x.bezierCurveTo(300, yy + 20, 700, yy - 20, W, yy + 10); x.stroke(); }
     x.strokeStyle = '#C8922E'; x.lineWidth = 4; x.strokeRect(30, 30, W - 60, H - 60); x.strokeStyle = 'rgba(213,217,222,.35)'; x.lineWidth = 1.5; x.strokeRect(44, 44, W - 88, H - 88);
     x.textAlign = 'center'; if (LOGO_IMG && LOGO_IMG.complete && LOGO_IMG.naturalWidth) x.drawImage(LOGO_IMG, W / 2 - 170, 40, 340, 340); x.fillStyle = '#C9CDD2'; x.font = '800 24px Manrope, sans-serif'; x.fillText('A   W H I S K E Y   C L U B', W / 2, 395);
-    x.fillStyle = '#F4E7D0'; x.font = '600 72px Cormorant, Georgia, serif'; x.fillStyle = '#E6E9EC'; x.font = '58px Rye, Georgia, serif'; wrap(x, e.title, W / 2, 470, 900, 60);
-    x.fillStyle = '#C9B293'; x.font = '600 34px Manrope, sans-serif'; x.fillText(fmtDay(evDate(e), true), W / 2, 530);
-    var w = R.winner;
-    if (w) { x.fillStyle = '#D4A23C'; x.font = '700 34px Cinzel, serif'; x.fillText('\u2605  CHAMPION  \u2605', W / 2, 610); x.fillStyle = '#F0C869'; x.font = '64px Rye, Georgia, serif'; wrap(x, w.bottle.name, W / 2, 685, 920, 66);
-      x.font = '700 120px Cinzel, serif'; x.fillText(sc(w.mean), W / 2, 830); x.fillStyle = '#B9BEC4'; x.font = '700 28px Manrope, sans-serif'; x.fillText('OAK SCORE \u00b7 GLASS ' + w.code, W / 2, 880); }
-    R.ranked.slice(1, 5).forEach(function (b, i) { var y = 950 + i * 80; x.textAlign = 'left'; x.fillStyle = '#E0A03A'; x.font = '700 46px Cormorant, Georgia, serif'; x.fillText((i + 2) + '.', 120, y);
-      x.fillStyle = '#F4E7D0'; x.font = '700 36px Manrope, sans-serif'; x.fillText(trunc(x, b.bottle.name, 640), 190, y); x.textAlign = 'right'; x.fillStyle = '#F4BE5C'; x.fillText(sc(b.mean), W - 120, y); });
-    x.textAlign = 'center'; x.fillStyle = '#A9AEB4'; x.font = '600 26px Manrope, sans-serif'; x.fillText(R.scorers + ' tasters \u00b7 ' + (e.bottles || []).length + ' blind pours', W / 2, H - 80);
+    x.fillStyle = '#F4E7D0'; x.font = '600 72px Cormorant, Georgia, serif'; x.fillStyle = '#E6E9EC'; var yy = fitText(x, e.title, W / 2, 470, 900, 58, 40, 'Rye, Georgia, serif', 1);
+    x.fillStyle = '#C9B293'; x.font = '600 34px Manrope, sans-serif'; x.fillText(fmtDay(evDate(e), true), W / 2, yy + 48);
+    var w = R.winner, y0 = 990;
+    if (w) { x.fillStyle = '#D4A23C'; x.font = '700 34px Cinzel, serif'; x.fillText('\u2605  CHAMPION  \u2605', W / 2, 610); x.fillStyle = '#F0C869'; var yb = fitText(x, w.bottle.name, W / 2, 680, 920, 60, 38, 'Rye, Georgia, serif', 2);
+      if (R.rankOnly) { x.fillStyle = '#B9BEC4'; x.font = '700 30px Manrope, sans-serif'; x.fillText('RANKED 1ST \u00b7 NO SCORES RECORDED', W / 2, yb + 60); }
+      else { x.font = '700 92px Cinzel, serif'; x.fillText(sc(w.mean), W / 2, yb + 100); x.fillStyle = '#B9BEC4'; x.font = '700 28px Manrope, sans-serif'; x.fillText('AVERAGE SCORE OUT OF 10 \u00b7 GLASS ' + w.code, W / 2, yb + 142); } y0 = Math.max(940, yb + (R.rankOnly ? 130 : 232)); }
+    var step = Math.max(62, Math.min(76, (H - 125 - y0) / Math.max(1, Math.min(4, R.ranked.length - 1)))); R.ranked.slice(1, 5).forEach(function (b, i) { var y = y0 + i * step; x.textAlign = 'left'; x.fillStyle = '#E0A03A'; x.font = '700 46px Cormorant, Georgia, serif'; x.fillText((i + 2) + '.', 120, y);
+      x.fillStyle = '#F4E7D0'; x.font = '700 36px Manrope, sans-serif'; x.fillText(trunc(x, b.bottle.name, R.rankOnly ? 770 : 640), 190, y); if (!R.rankOnly) { x.textAlign = 'right'; x.fillStyle = '#F4BE5C'; x.fillText(sc(b.mean), W - 120, y); } });
+    x.textAlign = 'center'; x.fillStyle = '#A9AEB4'; x.font = '600 26px Manrope, sans-serif'; x.fillText((R.rankOnly || R.scorers < 2 ? ((e.attendees || []).length || 'Club') : R.scorers) + ' tasters \u00b7 ' + (e.bottles || []).length + ' blind pours', W / 2, H - 80);
     c.toBlob(function (blob) {
       var file = new File([blob], 'char-oak-results.png', { type: 'image/png' }), url = URL.createObjectURL(blob);
       modal('<h2>Results card</h2><img alt="Results card" class="chart" src="' + url + '"><div class="btns"><a class="btn primary" download="char-oak-results.png" href="' + url + '">Download</a>' + (navigator.canShare && navigator.canShare({ files: [file] }) ? '<button class="btn" id="shr">Share\u2026</button>' : '') + '<button class="btn" data-close>Close</button></div>',
         function (el) { var b = $('#shr', el); if (b) b.onclick = function () { navigator.share({ files: [file], title: e.title }).catch(function () {}); }; });
     }, 'image/png');
   }
-  function trunc(x, s, w) { s = String(s || ''); while (s.length > 3 && x.measureText(s).width > w) s = s.slice(0, -2); return s; }
+  function trunc(x, s, w) { s = String(s || ''); if (x.measureText(s).width <= w) return s; while (s.length > 3 && x.measureText(s + '\u2026').width > w) s = s.slice(0, -1); return s.replace(/[\s(\-\u00b7,]+$/, '') + '\u2026'; }
+  function lines_(x, s, w) { var out = [], line = ''; String(s || '').split(' ').forEach(function (wd) { var t = line ? line + ' ' + wd : wd; if (x.measureText(t).width > w && line) { out.push(line); line = wd; } else line = t; }); out.push(line); return out; }
+  /* shrink the font until the text fits in maxLines, then ellipsize the last line; returns the y below the block */
+  function fitText(x, s, cx, y, w, px, minPx, fam, maxLines) {
+    var L; for (; px >= minPx; px -= 2) { x.font = px + 'px ' + fam; L = lines_(x, s, w); if (L.length <= maxLines) break; }
+    if (L.length > maxLines) { var rest = L.slice(maxLines - 1).join(' '); L = L.slice(0, maxLines - 1); L.push(trunc(x, rest, w)); }
+    var lh = Math.round(px * 1.18); L.forEach(function (t, i) { x.fillText(t, cx, y + i * lh); }); return y + (L.length - 1) * lh + Math.round(px * 0.35);
+  }
   function wrap(x, s, cx, y, w, lh) { var words = String(s || '').split(' '), line = '', n = 0; words.forEach(function (wd) { var t = line ? line + ' ' + wd : wd; if (x.measureText(t).width > w && line) { x.fillText(line, cx, y + n * lh); n++; line = wd; } else line = t; }); x.fillText(line, cx, y + n * lh); }
 
   /* ---------- HALL OF FAME ---------- */
@@ -572,8 +576,8 @@
     var st = CO.stats(S), M = st.members.filter(function (m) { return m.n; });
     var h = '<p class="eyebrow">Legends of the barrel</p><h1>Hall of Fame</h1>';
     if (!st.events) { shell('Hall of Fame', h + '<div class="empty"><span class="big">No legends yet</span>The first reveal starts the record books.</div>'); return; }
-    h += '<div class="sec"><h2>\uD83D\uDC51 Champions</h2></div><div class="list">' + st.winners.map(function (x) { return '<button class="item" data-go="a/' + x.ev.id + '"><span class="medal">\uD83C\uDFC6</span><span class="grow"><span class="t">' + esc(x.b.bottle.name) + '</span><br><span class="s">' + esc(x.ev.title) + ' \u00b7 ' + esc(fmtDay(evDate(x.ev))) + '</span></span><span class="oakscore">' + sc(x.b.mean) + '</span></button>'; }).join('') + '</div>';
-    h += '<div class="sec"><h2>Top bottles, all time</h2></div><div class="card">' + hbars(st.bottles.slice(0, 8).map(function (x, i) { return { code: String(i + 1), v: x.b.mean, label: sc(x.b.mean), name: (x.b.bottle.name || '').slice(0, 34) }; }), 100) + '</div>';
+    h += '<div class="sec"><h2>\uD83D\uDC51 Champions</h2></div><div class="list">' + st.winners.map(function (x) { return '<button class="item" data-go="a/' + x.ev.id + '"><span class="medal">\uD83C\uDFC6</span><span class="grow"><span class="t">' + esc(x.b.bottle.name) + '</span><br><span class="s">' + esc(x.ev.title) + ' \u00b7 ' + esc(fmtDay(evDate(x.ev))) + '</span></span>' + (CO.isRankOnly(x.ev) ? '<span class="pill">Ranked 1st</span>' : '<span class="oakscore">' + sc(x.b.mean) + '</span>') + '</button>'; }).join('') + '</div>';
+    h += '<div class="sec"><h2>Top bottles, all time</h2></div><div class="card">' + hbars(st.bottles.slice(0, 8).map(function (x, i) { return { code: String(i + 1), v: x.b.mean, label: sc(x.b.mean), name: x.b.bottle.name || '' }; }), 10) + '</div>';
     function board_(title, ic, list, val, sub) { return '<div class="card"><h3>' + ic + ' ' + title + '</h3><div class="list">' + list.slice(0, 5).map(function (m, i) { return '<button class="item" data-go="p/' + m.id + '"><span class="medal">' + (['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'][i] || (i + 1) + '.') + '</span>' + av(member(m.id), 'sm') + '<span class="grow t">' + esc(m.name) + '</span><b>' + val(m) + '</b></button>'; }).join('') + '</div>' + (sub ? '<p class="small dim">' + sub + '</p>' : '') + '</div>'; }
     h += '<div class="sec"><h2>Leaderboards</h2></div>';
     h += board_('Guess master', '\uD83C\uDFAF', M.slice().sort(function (a, b) { return b.guessPts - a.guessPts; }), function (m) { return m.guessPts + ' pts'; }, 'Points for naming the style, proof and bottle.');
@@ -609,7 +613,7 @@
     h += '<div class="card"><p><b>Favorite style:</b> ' + esc(x.favStyle ? x.favStyle + ' (avg ' + sc(x.favAvg) + ')' : 'Too early to tell') + '</p>' + (x.hosted ? '<p><b>Hosted:</b> ' + x.hosted + ' tasting' + (x.hosted > 1 ? 's' : '') + '</p>' : '')
       + (best ? '<p>\uD83D\uDC6F <b>Palate twin:</b> ' + esc(other(best)) + ' (' + best.match + '% match)</p>' : '') + (worst && worst !== best ? '<p>\u2694\uFE0F <b>Palate rival:</b> ' + esc(other(worst)) + ' (' + worst.match + '%)</p>' : '') + '</div>';
     if (x.topTags && x.topTags.length) { var tg = {}; x.topTags.forEach(function (t, i) { tg[t] = 6 - i; }); h += '<div class="card"><h3>Always tastes\u2026</h3>' + cloud(tg) + '</div>'; }
-    var hist = past().map(function (e) { var R = CO.results(e, S.scores, S.members), mine = []; R.bottles.forEach(function (b) { b.by.forEach(function (y) { if (y.scorer === id) mine.push({ b: b, s: y.score }); }); }); mine.sort(function (a, b) { return b.s - a.s; }); return { e: e, top: mine[0] }; }).filter(function (r) { return r.top; });
+    var hist = past().filter(function (e) { return !CO.isRankOnly(e); }).map(function (e) { var R = CO.results(e, S.scores, S.members), mine = []; R.bottles.forEach(function (b) { b.by.forEach(function (y) { if (y.scorer === id) mine.push({ b: b, s: y.score }); }); }); mine.sort(function (a, b) { return b.s - a.s; }); return { e: e, top: mine[0] }; }).filter(function (r) { return r.top; });
     if (hist.length) h += '<div class="sec"><h2>Their favorites</h2></div><div class="list">' + hist.map(function (r) { return '<button class="item" data-go="a/' + r.e.id + '"><span class="grow"><span class="t">' + esc(r.top.b.bottle.name) + '</span><br><span class="s">' + esc(r.e.title) + ' \u00b7 ' + esc(fmtDay(evDate(r.e))) + '</span></span><b>' + sc(r.top.s) + '</b></button>'; }).join('') + '</div>';
     shell('', h, { back: 'club' });
   }
@@ -683,7 +687,7 @@
     }).join('') + (s.categories.length < 8 ? '<p class="small muted">Add a category:</p><div class="chips">' + PRESET_CATS.filter(function (p) { return !s.categories.some(function (c) { return c.label === p[0]; }); }).map(function (p) { return '<button class="chip tag" data-act="bAdd" data-l="' + esc(p[0]) + '" data-h="' + esc(p[1]) + '">+ ' + esc(p[0]) + '</button>'; }).join('') + '<button class="chip tag" data-act="bAdd" data-l="New category" data-h="">+ Custom</button></div>' : '') + '</div>';
     h += '<div class="card"><h3>Extras</h3>' + [['tags', 'Flavor tag chips'], ['notes', 'Free-text notes'], ['guessStyle', 'Guess the style'], ['guessProof', 'Guess the proof'], ['guessMatch', 'Match the bottle (lineup game)']].map(function (o) { return '<div class="row between"><span>' + o[1] + '</span><div class="chips"><button class="chip' + (s[o[0]] !== false ? ' on' : '') + '" data-act="bX" data-k="' + o[0] + '" data-v="1">On</button><button class="chip' + (s[o[0]] === false ? ' on' : '') + '" data-act="bX" data-k="' + o[0] + '" data-v="0">Off</button></div></div>'; }).join('<hr class="oak">') + '</div>';
     var tw = s.categories.reduce(function (a, c) { return a + +c.weight; }, 0) || 1;
-    h += '<div class="card"><h3>How the Oak Score works</h3><p class="small muted">Each category is turned into 0\u2013100 and weighted: ' + s.categories.map(function (c) { return esc(c.label) + ' ' + Math.round(c.weight / tw * 100) + '%'; }).join(', ') + '.</p></div>';
+    h += '<div class="card"><h3>How the Oak Score works</h3><p class="small muted">Oak Score = the weighted average of the categories, shown out of 10: ' + s.categories.map(function (c) { return esc(c.label) + ' ' + Math.round(c.weight / tw * 100) + '%'; }).join(', ') + '.</p></div>';
     h += '<div class="sticky-foot"><button class="btn" data-act="bPrint">Preview print</button><button class="btn primary" data-act="bSave">Save sheet</button></div>';
     shell('', h, { back: e ? 'm/' + e.id : 'admin', full: true });
     $$('[data-bc]').forEach(function (inp) { inp.addEventListener('input', function () { s.categories[+inp.getAttribute('data-i')][inp.getAttribute('data-bc')] = inp.value; }); });
@@ -703,7 +707,7 @@
         + ((sh.guessStyle || sh.guessProof || sh.guessMatch) ? '<div class="guess">' + (sh.guessStyle ? 'Style: <span></span>' : '') + (sh.guessProof ? 'Proof: <span></span>' : '') + (sh.guessMatch ? 'Bottle: <span></span>' : '') + '</div>' : '') + '</div>';
     };
     var per = sh.categories.length > 5 ? 2 : 3, pages = '';
-    for (var p = 0; p < codes.length; p += per) pages += '<section class="ps page">' + head + codes.slice(p, p + per).map(block).join('') + '<p class="small">Circle one number per row. Oak Score = weighted average of the categories, 0\u2013100.</p></section>';
+    for (var p = 0; p < codes.length; p += per) pages += '<section class="ps page">' + head + codes.slice(p, p + per).map(block).join('') + '<p class="small">Circle one number per row. Oak Score = weighted average of the categories, out of 10.</p></section>';
     var h = '<div class="noprint"><h1>Print scoresheets</h1><p class="muted">Prints ' + n + ' glasses (' + per + ' per page), with blank lines for notes. Choose \u201cSave as PDF\u201d in the print dialog for a PDF.</p>'
       + (!e ? '<label class="f">How many glasses?</label><div class="chips">' + [3, 4, 5, 6, 8].map(function (k) { return '<button class="chip' + (k === n ? ' on' : '') + '" data-act="printN" data-n="' + k + '">' + k + '</button>'; }).join('') + '</div>' : '')
       + '<button class="btn primary block" data-act="print">\uD83D\uDDA8 Print / Save as PDF</button><button class="btn block" data-go="sheets">More designs: 5 printable scoresheets</button>' + (e && e.canHost ? '<p class="small muted">After the tasting, type paper sheets in from the live board.</p>' : '') + '<hr class="oak"></div>' + pages;
@@ -712,7 +716,7 @@
   function vPrintResults(e) {
     var R = CO.results(e, S.scores, S.members);
     var h = '<div class="noprint"><button class="btn primary block" data-act="print">\uD83D\uDDA8 Print results</button><hr class="oak"></div><section class="ps"><div class="hdr"><img class="plogo" src="icons/logo-print.png" alt=""><div class="grow"><b>' + esc(e.title) + '</b><br>' + esc(fmtDay(evDate(e), true)) + '</div><div>Char &amp; Oak: A Whiskey Club</div></div>'
-      + R.ranked.map(function (b) { return '<div class="bt"><h3>' + b.rank + '. ' + esc(b.bottle.name) + ' (Glass ' + b.code + ') \u2014 ' + sc(b.mean) + '</h3><div class="small">' + esc([b.bottle.distillery, b.bottle.style, b.bottle.proof ? b.bottle.proof + ' proof' : ''].filter(Boolean).join(' \u00b7 ')) + ' \u00b7 ' + esc(b.verdict) + '</div>' + b.by.map(function (x) { return '<div class="small">' + esc(x.name) + ': <b>' + sc(x.score) + '</b>' + (x.note ? ' \u2014 ' + esc(x.note) : '') + '</div>'; }).join('') + '</div>'; }).join('') + '</section>';
+      + R.ranked.map(function (b) { return '<div class="bt"><h3>' + b.rank + '. ' + esc(b.bottle.name) + ' (Glass ' + b.code + ')' + (R.rankOnly ? '' : ' \u2014 ' + sc(b.mean) + ' / 10') + '</h3><div class="small">' + esc([b.bottle.distillery, b.bottle.style, b.bottle.proof ? b.bottle.proof + ' proof' : ''].filter(Boolean).join(' \u00b7 ')) + ' \u00b7 ' + esc(b.verdict) + '</div>' + b.by.map(function (x) { return '<div class="small">' + esc(x.name) + ': <b>' + (R.rankOnly ? ordinal(Math.round(e.sheet.scale.max + 1 - x.score * e.sheet.scale.max / 10)) : sc(x.score)) + '</b>' + (x.note ? ' \u2014 ' + esc(x.note) : '') + '</div>'; }).join('') + '</div>'; }).join('') + '</section>';
     shell('', h, { back: 'a/' + e.id, full: true });
   }
 
@@ -876,6 +880,7 @@
     rvNext: function () { UI.rv.step++; UI.rv.open = false; render(true); },
     replay: function (d) { UI.rv = { id: d.id, step: 0, open: false }; go('reveal/' + d.id); },
     shareCard: function (d) { shareCard(d.id); },
+    hbName: function (d, el) { var b = el && el.closest ? el.closest('.hb-row') : null; if (b) b.classList.toggle('full'); },
     lb: function (d) { lightbox(d.id, d.pid); },
     lnAdd: function () { UI.lineup.list.push({ style: 'Bourbon' }); render(true); },
     lnDel: function (d) { UI.lineup.list.splice(+d.i, 1); render(true); },
@@ -919,7 +924,7 @@
     var t = ev_.target.closest('[data-go],[data-act]'); if (!t || t.closest('.modal [data-close]')) return;
     if (t.disabled) return;
     if (t.hasAttribute('data-go')) { ev_.preventDefault(); if (UI.cur && UI.cur.L.dirty) flush(UI.cur).catch(function () {}); go(t.getAttribute('data-go')); return; }
-    var a = t.getAttribute('data-act'); if (H[a]) { ev_.preventDefault(); H[a](t.dataset); }
+    var a = t.getAttribute('data-act'); if (H[a]) { ev_.preventDefault(); H[a](t.dataset, t); }
   });
 
   /* polling: fast while a tasting is live, slow otherwise, paused in the background */

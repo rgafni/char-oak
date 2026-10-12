@@ -106,12 +106,12 @@ var CO = (function () {
   /* ---------- scoring ---------- */
   function entryScore(entry, sheet) {
     if (!entry || !entry.v) return null;
-    var sc = sheet.scale, span = (sc.max - sc.min) || 1, tw = 0, tot = 0;
+    var sc = sheet.scale, k10 = 10 / (sc.max || 10), tw = 0, tot = 0;
     sheet.categories.forEach(function (c) {
       var v = entry.v[c.k]; if (v == null || v === '' || !isFinite(+v)) return;
-      tw += +c.weight; tot += +c.weight * ((+v - sc.min) / span);
+      tw += +c.weight; tot += +c.weight * (+v);
     });
-    return tw ? Math.round(tot / tw * 1000) / 10 : null;   /* 0-100 */
+    return tw ? Math.round(tot / tw * k10 * 1000) / 1000 : null;   /* plain (weighted) average, out of 10 */
   }
   function proofBucket(p) { p = +p; if (!p) return null; for (var i = 0; i < PROOFS.length; i++) if (p >= PROOFS[i].lo && p < PROOFS[i].hi) return PROOFS[i].k; return null; }
   function guessPoints(g, b) {
@@ -123,8 +123,10 @@ var CO = (function () {
     if (g.matchName) { d.match = g.matchName === b.name ? 3 : 0; pts += d.match; }
     return { pts: pts, d: d };
   }
-  function label(sd_) { return sd_ == null ? '' : sd_ < 7 ? 'Consensus' : sd_ > 14 ? 'Controversial' : 'Mixed'; }
+  function label(sd_) { return sd_ == null ? '' : sd_ < 0.7 ? 'Consensus' : sd_ > 1.4 ? 'Controversial' : 'Mixed'; }
   /* Full results for one revealed (or host-view) event. */
+  /* imported nights that only have a ranking (no real scores): rank points order the bottles, but no score is ever shown */
+  function isRankOnly(ev) { var c = ev && ev.sheet && ev.sheet.categories; return !!(c && c.length === 1 && c[0].k === 'rank'); }
   function results(ev, rows, members) {
     var sheet = ev.sheet || defaultSheet(), names = {};
     (members || []).forEach(function (m) { names[m.id] = m.name; });
@@ -154,7 +156,7 @@ var CO = (function () {
       guess[r.scorer] = { name: r.name || names[r.scorer] || 'Guest', pts: tot, det: det };
     });
     var most = bottles.filter(function (b) { return b.n > 1; }).sort(function (a, b) { return b.sd - a.sd; });
-    return { bottles: bottles, ranked: ranked, winner: ranked[0] || null, guess: guess, controversial: most[0] || null, consensus: most.length ? most[most.length - 1] : null, scorers: rows.length };
+    return { rankOnly: isRankOnly(ev), bottles: bottles, ranked: ranked, winner: ranked[0] || null, guess: guess, controversial: most[0] || null, consensus: most.length ? most[most.length - 1] : null, scorers: rows.length };
   }
 
   /* ---------- stats across the whole club ---------- */
@@ -167,13 +169,13 @@ var CO = (function () {
     evs.forEach(function (ev) {
       var R = results(ev, data.scores, members);
       if (R.winner) winners.push({ ev: ev, b: R.winner });
-      R.bottles.forEach(function (b) { if (b.n) bottlesAll.push({ ev: ev, b: b }); });
+      R.bottles.forEach(function (b) { if (b.n && !R.rankOnly) bottlesAll.push({ ev: ev, b: b }); });
       if (ev.host && per[ev.host]) per[ev.host].hosted++;
       var seen = {};
       R.bottles.forEach(function (b) {
         b.by.forEach(function (x) {
           var p = per[x.scorer]; if (!p) return;
-          seen[x.scorer] = 1; p.scores.push(x.score); all.push(x.score);
+          seen[x.scorer] = 1; if (R.rankOnly) return; p.scores.push(x.score); all.push(x.score);
           var others = b.by.filter(function (y) { return y.scorer !== x.scorer; }).map(function (y) { return y.score; });
           if (others.length) p.diffs.push(x.score - mean(others));
           var st = b.bottle.style || 'Other'; (p.styles[st] = p.styles[st] || []).push(x.score);
@@ -182,13 +184,14 @@ var CO = (function () {
         });
       });
       Object.keys(R.guess).forEach(function (s) { if (per[s]) { per[s].guessPts += R.guess[s].pts; per[s].guessN++; } });
+      (ev.attendees || []).forEach(function (a) { if (per[a]) seen[a] = 1; });
       Object.keys(seen).forEach(function (s) { per[s].attended++; per[s].events.push(ev.id); });
     });
     var list = Object.keys(per).map(function (k) {
       var p = per[k], bias = mean(p.diffs), fav = null, favAvg = -1;
       Object.keys(p.styles).forEach(function (s) { var a = mean(p.styles[s]); if (a > favAvg) { favAvg = a; fav = s; } });
       var topTags = Object.keys(p.tags).sort(function (a, b) { return p.tags[b] - p.tags[a]; }).slice(0, 6);
-      return { id: p.id, name: p.name, avg: r1(mean(p.scores)), n: p.scores.length, bias: r1(bias), biasLabel: bias == null ? 'Not enough pours yet' : bias <= -4 ? 'Harsh judge' : bias >= 4 ? 'Generous pour' : 'Well calibrated',
+      return { id: p.id, name: p.name, avg: r1(mean(p.scores)), n: p.scores.length, bias: r1(bias), biasLabel: bias == null ? 'Not enough pours yet' : bias <= -0.4 ? 'Harsh judge' : bias >= 0.4 ? 'Generous pour' : 'Well calibrated',
         favStyle: fav, favAvg: r1(favAvg < 0 ? null : favAvg), topTags: topTags, attended: p.attended, hosted: p.hosted, guessPts: p.guessPts, byBottle: p.byBottle,
         attendance: evs.length ? Math.round(p.attended / evs.length * 100) : 0, accuracy: p.diffs.length ? r1(mean(p.diffs.map(Math.abs))) : null };
     });
@@ -197,7 +200,7 @@ var CO = (function () {
     for (var i = 0; i < list.length; i++) for (var j = i + 1; j < list.length; j++) {
       var a = list[i], b = list[j], d = [];
       Object.keys(a.byBottle).forEach(function (k) { if (b.byBottle[k] != null) d.push(Math.abs(a.byBottle[k] - b.byBottle[k])); });
-      if (d.length >= 3) twins.push({ a: a.id, b: b.id, an: a.name, bn: b.name, n: d.length, match: Math.max(0, Math.round(100 - 2 * mean(d))) });
+      if (d.length >= 3) twins.push({ a: a.id, b: b.id, an: a.name, bn: b.name, n: d.length, match: Math.max(0, Math.round(100 - 20 * mean(d))) });
     }
     twins.sort(function (x, y) { return y.match - x.match; });
     bottlesAll.sort(function (x, y) { return y.b.mean - x.b.mean; });
@@ -477,7 +480,7 @@ var CO = (function () {
     return A[action].apply(null, [ctx].concat(args || []));
   }
   return { handle: handle, ACTIONS: Object.keys(A), STYLES: STYLES, PROOFS: PROOFS, FAMILIES: FAMILIES, TAG_FAMILY: TAG_FAMILY, defaultSheet: defaultSheet, defaultSettings: defaultSettings,
-    restCheck: restCheck, dayInfo: dayInfo, toUTC: toUTC, addDays: addDays, dow: dow, entryScore: entryScore, results: results, stats: stats, tally: tally, initials: initials,
+    restCheck: restCheck, dayInfo: dayInfo, toUTC: toUTC, addDays: addDays, dow: dow, entryScore: entryScore, results: results, isRankOnly: isRankOnly, stats: stats, tally: tally, initials: initials,
     letters: letters, proofBucket: proofBucket, COLORS: COLORS, uid: uid, mean: mean, r1: r1, canHost: canHost, isAdmin: isAdmin, cleanSheet: cleanSheet, err: err };
 })();
 if (typeof module !== 'undefined') module.exports = CO;
