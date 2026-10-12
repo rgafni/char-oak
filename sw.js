@@ -1,7 +1,7 @@
 /* Char & Oak service worker: caches the APP SHELL ONLY.
    Never caches or even touches API traffic (script.google.com / googleusercontent.com), and never
    stores a URL with a query string, so a ?k= token can never land in the cache. */
-var CACHE = 'choak-shell-v5';
+var CACHE = 'choak-shell-v6';
 var SHELL = ['./', 'index.html', 'app.css', 'boot.js', 'install.js', 'install.css', 'config.js', 'core.js', 'demo.js', 'app.js',
   'manifest.webmanifest', 'fonts/manrope-latin.woff2', 'fonts/cormorant.woff2', 'icons/icon-192.png', 'icons/icon-512.png',
   'icons/maskable-192.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png', 'icons/logo-160.png', 'icons/logo-720.png', 'icons/logo-print.png', 'icons/wood.jpg', 'fonts/pirata.woff2', 'fonts/cinzel.woff2'];

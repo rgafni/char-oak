@@ -208,7 +208,7 @@ var CO = (function () {
   function isAdmin(who) { return who && who.role === 'admin'; }
   function canHost(who, ev) { return isAdmin(who) || (ev && ev.host && who && ev.host === who.id); }
   function publicMember(m, who) {
-    var o = pick(m, ['id', 'name', 'nick', 'bio', 'avatar', 'color', 'role', 'active', 'joined', 'favorite']);
+    var o = pick(m, ['id', 'name', 'nick', 'bio', 'avatar', 'color', 'role', 'active', 'joined', 'favorite', 'left']);
     if (isAdmin(who)) { o.linkSet = !!m.tokenHash; o.linkAt = m.linkAt || ''; }
     return o;
   }
@@ -236,7 +236,7 @@ var CO = (function () {
   /* lineup guesses: members pick a lineup name; we store the NAME, and score against the real bottle at reveal */
   function getAll(ctx) {
     var who = ctx.who, s = ctx.store;
-    var members = s.list('members').filter(function (m) { return m.active !== false || isAdmin(who); }).map(function (m) { return publicMember(m, who); });
+    var members = s.list('members').filter(function (m) { return m.active !== false || !!m.left || isAdmin(who); }).map(function (m) { return publicMember(m, who); });
     var evsRaw = s.list('events'), rows = s.list('scores');
     var events = evsRaw.map(function (ev) { var e = sealedEvent(ev, who); e.progress = progress(ev, rows); return e; });
     var visibleScores = rows.filter(function (r) {
@@ -298,6 +298,8 @@ var CO = (function () {
     if (f.active != null) { if (m.role === 'admin' && !f.active) throw err(400, 'The admin stays active'); m.active = !!f.active; }
     if (f.color && /^#[0-9a-f]{6}$/i.test(f.color)) m.color = f.color;
     if (f.bio != null) m.bio = str(f.bio, 200);
+    if (f.left != null) { var lf = str(f.left, 10); if (lf && !/^\d{4}-\d{2}-\d{2}$/.test(lf)) throw err(400, 'Bad date'); if (lf && m.role === 'admin') throw err(400, 'The admin stays active'); if (lf) { m.left = lf; m.active = false; } else delete m.left; }
+    if (f.joined != null && /^\d{4}-\d{2}-\d{2}$/.test(str(f.joined, 10))) m.joined = str(f.joined, 10);
     ctx.store.put('members', m); return publicMember(m, ctx.who);
   };
   A.resetLink = function (ctx, id) {
@@ -331,6 +333,8 @@ var CO = (function () {
     if (f.showLineup != null) ev.showLineup = !!f.showLineup;
     if (f.sheet) { if (ev.status === 'live' || ev.status === 'revealed') { if (!f.force) throw err(400, 'Scoring has started. The scoresheet is locked.'); } ev.sheet = cleanSheet(f.sheet); }
     if (f.when && isAdmin(ctx.who)) ev.when = cleanWhen(f.when);
+    if (Array.isArray(f.attendees) && isAdmin(ctx.who)) ev.attendees = f.attendees.slice(0, 24).map(function (a) { return str(a, 60); }).filter(Boolean);
+    if (f.imported != null && isAdmin(ctx.who)) ev.imported = str(f.imported, 160);
     ctx.store.put('events', ev); return ev;
   };
   A.deleteEvent = function (ctx, id) { needAdmin(ctx); var ev = getEv(ctx.store, id); ctx.store.remove('events', ev.id);
