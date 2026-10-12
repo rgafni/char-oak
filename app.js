@@ -540,7 +540,7 @@
   /* shareable results card (PNG, made on the phone) */
   var LOGO_IMG = new Image(); LOGO_IMG.src = 'icons/logo-720.png';
   function shareCard(id) {
-    var f = document.fonts ? Promise.all(['58px "Pirata One"', '700 40px Cinzel', '700 20px Manrope'].map(function (x) { return document.fonts.load(x); })) : Promise.resolve();
+    var f = document.fonts ? Promise.all(['58px Rye', '700 40px Cinzel', '700 20px Manrope'].map(function (x) { return document.fonts.load(x); })) : Promise.resolve();
     var l = LOGO_IMG.complete ? Promise.resolve() : new Promise(function (r) { LOGO_IMG.onload = LOGO_IMG.onerror = r; });
     Promise.all([f, l]).then(function () { shareCard_(id); }, function () { shareCard_(id); });
   }
@@ -550,10 +550,10 @@
     for (var i = 0; i < 40; i++) { x.strokeStyle = 'rgba(120,90,55,' + (0.04 + Math.random() * .05) + ')'; x.lineWidth = 2; x.beginPath(); var yy = i * 36; x.moveTo(0, yy); x.bezierCurveTo(300, yy + 20, 700, yy - 20, W, yy + 10); x.stroke(); }
     x.strokeStyle = '#C8922E'; x.lineWidth = 4; x.strokeRect(30, 30, W - 60, H - 60); x.strokeStyle = 'rgba(213,217,222,.35)'; x.lineWidth = 1.5; x.strokeRect(44, 44, W - 88, H - 88);
     x.textAlign = 'center'; if (LOGO_IMG && LOGO_IMG.complete && LOGO_IMG.naturalWidth) x.drawImage(LOGO_IMG, W / 2 - 170, 40, 340, 340); x.fillStyle = '#C9CDD2'; x.font = '800 24px Manrope, sans-serif'; x.fillText('A   W H I S K E Y   C L U B', W / 2, 395);
-    x.fillStyle = '#F4E7D0'; x.font = '600 72px Cormorant, Georgia, serif'; x.fillStyle = '#E6E9EC'; x.font = '58px "Pirata One", Georgia, serif'; wrap(x, e.title, W / 2, 470, 900, 60);
+    x.fillStyle = '#F4E7D0'; x.font = '600 72px Cormorant, Georgia, serif'; x.fillStyle = '#E6E9EC'; x.font = '58px Rye, Georgia, serif'; wrap(x, e.title, W / 2, 470, 900, 60);
     x.fillStyle = '#C9B293'; x.font = '600 34px Manrope, sans-serif'; x.fillText(fmtDay(evDate(e), true), W / 2, 530);
     var w = R.winner;
-    if (w) { x.fillStyle = '#D4A23C'; x.font = '700 34px Cinzel, serif'; x.fillText('\u2605  CHAMPION  \u2605', W / 2, 610); x.fillStyle = '#F0C869'; x.font = '64px "Pirata One", Georgia, serif'; wrap(x, w.bottle.name, W / 2, 685, 920, 66);
+    if (w) { x.fillStyle = '#D4A23C'; x.font = '700 34px Cinzel, serif'; x.fillText('\u2605  CHAMPION  \u2605', W / 2, 610); x.fillStyle = '#F0C869'; x.font = '64px Rye, Georgia, serif'; wrap(x, w.bottle.name, W / 2, 685, 920, 66);
       x.font = '700 120px Cinzel, serif'; x.fillText(sc(w.mean), W / 2, 830); x.fillStyle = '#B9BEC4'; x.font = '700 28px Manrope, sans-serif'; x.fillText('OAK SCORE \u00b7 GLASS ' + w.code, W / 2, 880); }
     R.ranked.slice(1, 5).forEach(function (b, i) { var y = 950 + i * 80; x.textAlign = 'left'; x.fillStyle = '#E0A03A'; x.font = '700 46px Cormorant, Georgia, serif'; x.fillText((i + 2) + '.', 120, y);
       x.fillStyle = '#F4E7D0'; x.font = '700 36px Manrope, sans-serif'; x.fillText(trunc(x, b.bottle.name, 640), 190, y); x.textAlign = 'right'; x.fillStyle = '#F4BE5C'; x.fillText(sc(b.mean), W - 120, y); });

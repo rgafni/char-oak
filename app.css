@@ -1,5 +1,5 @@
 @font-face { font-family: 'Manrope'; src: url('fonts/manrope-latin.woff2') format('woff2'); font-weight: 200 800; font-display: swap; }
-@font-face { font-family: 'Pirata One'; src: url('fonts/pirata.woff2') format('woff2'); font-display: swap; unicode-range: U+0020-0025, U+0027-007E, U+00A0-00FF, U+2013-2026; }
+@font-face { font-family: 'Rye'; src: url('fonts/rye.woff2') format('woff2'); font-display: swap; unicode-range: U+0020-0025, U+0027-007E, U+00A0-00FF, U+2013-2026; }
 @font-face { font-family: 'Cinzel'; src: url('fonts/cinzel.woff2') format('woff2'); font-weight: 400 900; font-display: swap; }
 @font-face { font-family: 'Cormorant'; src: url('fonts/cormorant.woff2') format('woff2'); font-weight: 300 700; font-display: swap; }
 :root {
@@ -236,7 +236,7 @@ input[type=date], input[type=time] { min-width: 0; max-width: 100%; -webkit-appe
 /* ===== Char & Oak brand theme (matches the badge: black, chrome silver script, weathered wood, gold wheat & stars) ===== */
 :root { --bg: #000; --bg2: #0d0a07; --card: #1b140e; --card2: #241a12; --line: #3d2f21; --line2: #5a4630;
   --amber: #D4A23C; --amber2: #F0C869; --gold3: #9C6A1C; --cream: #ECEFF2; --silver: #D5D9DE; --muted: #B4BAC1; --dim: #858C94; --ember: #C9572F;
-  --display: 'Pirata One', 'Cormorant', Georgia, serif; --caps: 'Cinzel', Georgia, serif; }
+  --display: 'Rye', 'Cormorant', Georgia, serif; --caps: 'Cinzel', Georgia, serif; }
 html, body { background: #000; }
 body { background: #000; color: var(--cream); }
 h1, h2, h3, .brand b { font-family: var(--display); font-weight: 400; letter-spacing: .02em;
@@ -267,7 +267,7 @@ input, select, textarea { background: #050403; border-color: #4a3926; color: var
 .toast { background: linear-gradient(180deg, #F6DA8A, #D4A23C); color: #1a1006; }
 .top { gap: 8px; }
 .logo { width: 60px; height: 60px; border-radius: 0; box-shadow: none; background: transparent; object-fit: contain; }
-.brand b { font-size: 26px; } .brand small { font-family: var(--caps); font-size: 10px; letter-spacing: .18em; color: var(--amber); }
+.brand b { font-size: 18px; letter-spacing: 0; } .brand > span { min-width: 0; overflow: hidden; } .brand small { font-family: var(--caps); font-size: 10px; letter-spacing: .18em; color: var(--amber); }
 .back { min-width: 48px; padding: 0 10px; justify-content: center; background: #0b0907; border-color: #4a3926; }
 .badge { display: flex; justify-content: center; } .badge img { width: 100%; height: auto; display: block; filter: drop-shadow(0 10px 30px rgba(212,162,60,.12)); }
 .badge.big img { max-width: 340px; } .badge.mid img { max-width: 220px; }
