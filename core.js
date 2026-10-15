@@ -144,10 +144,10 @@ var CO = (function () {
       });
       var cm = {}; Object.keys(cats).forEach(function (k) { cm[k] = r1(mean(cats[k])); });
       var s_ = vals.length ? r1(sd(vals)) : null;
-      return { id: b.id, code: b.code, bottle: b, n: vals.length, mean: r1(mean(vals)), median: r1(median(vals)), sd: s_, min: vals.length ? Math.min.apply(null, vals) : null,
+      return { id: b.id, code: b.code, bottle: b, n: vals.length, mean: r1(mean(vals)), exact: vals.length ? mean(vals) : null, idx: (ev.bottles || []).indexOf(b), median: r1(median(vals)), sd: s_, min: vals.length ? Math.min.apply(null, vals) : null,
         max: vals.length ? Math.max.apply(null, vals) : null, verdict: label(s_), cats: cm, tags: tags, families: fam, notes: notes, by: by.sort(function (a, b2) { return b2.score - a.score; }) };
     });
-    var ranked = bottles.filter(function (b) { return b.n; }).sort(function (a, b) { return b.mean - a.mean || b.median - a.median; });
+    var ranked = bottles.filter(function (b) { return b.n; }).sort(function (a, b) { return (b.exact - a.exact) || b.median - a.median || a.idx - b.idx; });   /* rank on the true average, never the rounded one */
     ranked.forEach(function (b, i) { b.rank = i + 1; });
     var guess = {};
     rows.forEach(function (r) {
@@ -203,7 +203,7 @@ var CO = (function () {
       if (d.length >= 3) twins.push({ a: a.id, b: b.id, an: a.name, bn: b.name, n: d.length, match: Math.max(0, Math.round(100 - 20 * mean(d))) });
     }
     twins.sort(function (x, y) { return y.match - x.match; });
-    bottlesAll.sort(function (x, y) { return y.b.mean - x.b.mean; });
+    bottlesAll.sort(function (x, y) { return y.b.exact - x.b.exact; });
     return { members: list, twins: twins, winners: winners, bottles: bottlesAll, events: evs.length, clubAvg: r1(mean(all)) };
   }
 

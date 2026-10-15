@@ -90,11 +90,13 @@
   function go(path) { if (location.hash === '#/' + path) render(); else location.hash = '#/' + path; }
   window.addEventListener('hashchange', function () { window.scrollTo(0, 0); render(); });
   var TABS = [['home', 'Home', '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'],
-    ['meetings', 'Meetings', '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'],
-    ['archive', 'Archive', '<path d="M4 7h16v13H4zM2 3h20v4H2zM10 11h4"/>'],
-    ['hall', 'Hall', '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>'],
-    ['club', 'Club', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>']];
-  var TAB_OF = { home: 'home', meetings: 'meetings', m: 'meetings', live: 'meetings', archive: 'archive', a: 'archive', hall: 'hall', club: 'club', p: 'club', wish: 'club', admin: 'club', builder: 'club', me: 'club', sheets: 'club', print: 'club' };
+    ['meetings', 'Tastings', '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'],
+    ['archive', 'Past', '<path d="M4 7h16v13H4zM2 3h20v4H2zM10 11h4"/>'],
+    ['members', 'Members', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>'],
+    ['club', 'More', '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>']];
+  var PLACE = { '': 'Home', home: 'Home', meetings: 'Tastings', archive: 'Past', members: 'Members', club: 'More', hall: 'Hall of Fame' };
+  function placeOf(path) { var p = String(path || ''); if (PLACE[p] != null) return PLACE[p]; var k = p.split('/')[0]; return { m: 'Tasting', a: 'Tasting', p: 'Profile' }[k] || 'Back'; }
+  var TAB_OF = { home: 'home', meetings: 'meetings', m: 'meetings', live: 'meetings', archive: 'archive', a: 'archive', hall: 'archive', members: 'members', p: 'members', club: 'club', wish: 'club', admin: 'club', builder: 'club', me: 'club', sheets: 'club', print: 'club' };
   var LOGO = '<img class="logo" src="icons/logo-160.png" alt="Char &amp; Oak" width="60" height="60">';
   var STARS = '<div class="stars" aria-hidden="true">\u2605 \u2605 \u2605</div>';
   function wheat(cls) {
@@ -106,7 +108,7 @@
   function shell(title, body, opt) {
     opt = opt || {}; var r = route(), tab = TAB_OF[r.name] || 'home', liveEv = (S.events || []).filter(function (e) { return e.status === 'live'; })[0];
     document.body.classList.toggle('full', !!opt.full);
-    var top = '<header class="top noprint' + (opt.back ? ' compact' : '') + '">' + (opt.back ? '<button class="back" data-go="' + esc(opt.back) + '" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button><a class="brand" href="#/">' + LOGO + '<span><b>Char &amp; Oak</b><small>A Whiskey Club</small></span></a>'
+    var top = '<header class="top noprint' + (opt.back ? ' compact' : '') + '">' + (opt.back ? '<button class="back" data-go="' + esc(opt.back) + '" aria-label="Back to ' + esc(placeOf(opt.back)) + '"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg><span class="bl">' + esc(placeOf(opt.back)) + '</span></button><a class="brand" href="#/">' + LOGO + '<span><b>Char &amp; Oak</b><small>' + esc(title || (TABS.filter(function (t) { return t[0] === tab; })[0] || [0, 'A Whiskey Club'])[1]) + '</small></span></a>'
       : '<a class="brand" href="#/">' + LOGO + '<span><b>Char &amp; Oak</b><small>' + esc(title || 'A Whiskey Club') + '</small></span></a>')
       + (DEMO ? '<button class="pill amber" data-act="demoAs" aria-label="Switch demo taster">Demo: ' + esc(S.me.name.split(' ')[0]) + '</button>' : '')
       + '<button class="btn ghost sm" data-go="p/' + esc(S.me.id) + '" aria-label="My profile">' + av(S.me, 'sm') + '</button></header>';
@@ -131,10 +133,10 @@
       if (w) h += '<div class="card glow champ">' + wheat('l') + wheat('r') + '<p class="eyebrow">Last champion \u00b7 ' + esc(fmtDay(evDate(last))) + '</p><div class="row"><div class="crown" aria-hidden="true">\uD83D\uDC51</div><div class="grow"><h2>' + esc(w.bottle.name) + '</h2><p class="muted small">' + esc([w.bottle.distillery, w.bottle.style, w.bottle.proof ? w.bottle.proof + ' proof' : ''].filter(Boolean).join(' \u00b7 ')) + '</p></div>' + (R.rankOnly ? '' : '<div class="oakscore">' + sc(w.mean) + '</div>') + '</div><button class="btn block" data-go="a/' + last.id + '">See the full results</button></div>'; }
     h += '<div class="grid3"><div class="stat"><b>' + st.events + '</b><span>tastings</span></div><div class="stat"><b>' + st.bottles.length + '</b><span>bottles judged</span></div><div class="stat"><b>' + (st.clubAvg == null ? '\u2013' : sc(st.clubAvg)) + '</b><span>club average</span></div></div>';
     h += '<div class="sec"><h2>Explore</h2></div><div class="list">'
-      + tile('hall', '\uD83C\uDFC6', 'Hall of Fame', 'Champions, leaderboards, palate twins')
+      + tile('hall', '\uD83C\uDFC6', 'Hall of Fame', 'Champion bottles, all time')
       + tile('wish', '\uD83E\uDD43', 'Bottle wishlist', 'Suggest and vote on what to pour next')
       + tile('sheets', '\uD83D\uDDA8\uFE0F', 'Print scoresheets', '5 paper designs to choose from')
-      + tile('club', '\uD83E\uDDD1\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1', 'The members', active().length + ' tasters, palate stats and bias')
+      + tile('members', '\uD83E\uDDD1\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1', 'Members & palates', active().length + ' tasters, side by side')
       + '</div>';
     shell('A Whiskey Club', h);
   }
@@ -420,7 +422,7 @@
 
   /* ---------- ARCHIVE ---------- */
   function vArchive() {
-    var P = past(), h = '<h1>The Archive</h1><p class="muted">Every tasting, every glass, every note.</p>';
+    var P = past(), h = '<h1>The Archive</h1><p class="muted">Every tasting, every glass, every note.</p><div class="list">' + tile('hall', '\uD83C\uDFC6', 'Hall of Fame', 'Champion bottles, all time') + '</div>';
     if (isAdmin()) h += '<button class="btn block" data-act="pastEv">+ Add a past tasting (from paper)</button>';
     var years = {}; P.forEach(function (e) { var y = evDate(e).slice(0, 4); (years[y] = years[y] || []).push(e); });
     if (!P.length) h += '<div class="empty"><span class="big">Nothing here yet</span>After the first reveal, the results land here automatically.</div>';
@@ -459,8 +461,9 @@
     var e = ev(id); if (!e) return notFound();
     if (e.status !== 'revealed') return go('m/' + id);
     var R = CO.results(e, S.scores, S.members), w = R.winner, seg = UI.seg['a' + id] || 'results';
-    var h = '<p class="eyebrow">' + esc(fmtDay(evDate(e), true)) + (e.host ? ' \u00b7 hosted by ' + esc(nameOf(e.host)) : '') + '</p><h1>' + esc(e.title) + '</h1>' + (e.theme ? '<p class="muted">' + esc(e.theme) + '</p>' : '');
+    var h = '<p class="eyebrow">' + esc(fmtDay(evDate(e), true)) + (e.host ? ' \u00b7 hosted by ' + esc(nameOf(e.host)) : '') + (e.location ? ' \u00b7 ' + esc(e.location) : '') + '</p><h1>' + esc(e.title) + '</h1>' + (e.theme ? '<p class="muted">' + esc(e.theme) + '</p>' : '');
     if ((e.attendees || []).length) h += '<p class="small muted">\uD83E\uDD43 At the table: ' + e.attendees.map(function (x) { var m = member(x); return esc(/^g:/.test(x) ? x.slice(2) : m ? m.name + (m.left ? ' (past member)' : '') : 'Someone'); }).join(', ') + '</p>';
+    if (e.notes) h += '<div class="card nightnote"><p class="eyebrow">The night</p><p>' + esc(e.notes) + '</p></div>';
     if (e.imported) h += '<p class="small dim">\uD83D\uDCDC ' + esc(e.imported) + '</p>';
     if (w) h += '<div class="card glow center champ">' + wheat('l') + wheat('r') + STARS + '<div class="crown" aria-hidden="true">\uD83D\uDC51</div><p class="eyebrow">Champion of the night \u00b7 Glass ' + w.code + '</p><h2>' + esc(w.bottle.name) + '</h2><p class="muted small">' + esc([w.bottle.distillery, w.bottle.line, w.bottle.style, w.bottle.proof ? w.bottle.proof + ' proof' : '', w.bottle.age, w.bottle.price].filter(Boolean).join(' \u00b7 ')) + '</p>' + (R.rankOnly ? '<p class="small muted">Ranked 1st \u00b7 no scores were recorded that night</p>' : '<div class="oakscore">' + sc(w.mean) + '<small> / 10</small></div><p class="small muted">Average score \u00b7 ' + (w.n > 1 ? w.n + ' tasters \u00b7 ' + esc(w.verdict) : 'club result') + '</p>') + '<div class="btns"><button class="btn primary" data-act="shareCard" data-id="' + id + '">Share results card</button><button class="btn" data-act="replay" data-id="' + id + '">Replay the reveal</button></div></div>';
     h += '<div class="seg" role="tablist">' + [['results', 'Results'], ['notes', 'Notes'], ['scores', 'Scores'], ['photos', 'Photos' + ((e.photos || []).length ? ' (' + e.photos.length + ')' : '')]].map(function (s) { return '<button role="tab" class="' + (seg === s[0] ? 'on' : '') + '" data-act="seg" data-id="a' + id + '" data-s="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>';
@@ -579,43 +582,119 @@
     h += '<div class="sec"><h2>\uD83D\uDC51 Champions</h2></div><div class="list">' + st.winners.map(function (x) { return '<button class="item" data-go="a/' + x.ev.id + '"><span class="medal">\uD83C\uDFC6</span><span class="grow"><span class="t">' + esc(x.b.bottle.name) + '</span><br><span class="s">' + esc(x.ev.title) + ' \u00b7 ' + esc(fmtDay(evDate(x.ev))) + '</span></span>' + (CO.isRankOnly(x.ev) ? '<span class="pill">Ranked 1st</span>' : '<span class="oakscore">' + sc(x.b.mean) + '</span>') + '</button>'; }).join('') + '</div>';
     h += '<div class="sec"><h2>Top bottles, all time</h2></div><div class="card">' + hbars(st.bottles.slice(0, 8).map(function (x, i) { return { code: String(i + 1), v: x.b.mean, label: sc(x.b.mean), name: x.b.bottle.name || '' }; }), 10) + '</div>';
     function board_(title, ic, list, val, sub) { return '<div class="card"><h3>' + ic + ' ' + title + '</h3><div class="list">' + list.slice(0, 5).map(function (m, i) { return '<button class="item" data-go="p/' + m.id + '"><span class="medal">' + (['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'][i] || (i + 1) + '.') + '</span>' + av(member(m.id), 'sm') + '<span class="grow t">' + esc(m.name) + '</span><b>' + val(m) + '</b></button>'; }).join('') + '</div>' + (sub ? '<p class="small dim">' + sub + '</p>' : '') + '</div>'; }
-    h += '<div class="sec"><h2>Leaderboards</h2></div>';
-    h += board_('Guess master', '\uD83C\uDFAF', M.slice().sort(function (a, b) { return b.guessPts - a.guessPts; }), function (m) { return m.guessPts + ' pts'; }, 'Points for naming the style, proof and bottle.');
-    h += board_('Golden palate', '\u2728', M.filter(function (m) { return m.accuracy != null; }).sort(function (a, b) { return a.accuracy - b.accuracy; }), function (m) { return '\u00b1' + sc(m.accuracy); }, 'Closest to the club consensus, bottle after bottle.');
-    h += board_('Iron attendance', '\uD83D\uDCC5', M.slice().sort(function (a, b) { return b.attended - a.attended; }), function (m) { return m.attended + '/' + st.events; });
-    h += board_('Harshest judge', '\uD83E\uDDCA', M.filter(function (m) { return m.bias != null; }).sort(function (a, b) { return a.bias - b.bias; }), function (m) { return (m.bias > 0 ? '+' : '') + sc(m.bias); }, 'Average points above or below everyone else on the same glass.');
-    h += board_('Most generous pour', '\uD83C\uDF6F', M.filter(function (m) { return m.bias != null; }).sort(function (a, b) { return b.bias - a.bias; }), function (m) { return (m.bias > 0 ? '+' : '') + sc(m.bias); });
-    h += '<div class="sec"><h2>\uD83D\uDC6F Palate twins</h2></div><div class="card">' + (st.twins.length ? '<div class="list">' + st.twins.slice(0, 5).map(function (t) { return '<div class="item"><span class="avs">' + av(member(t.a), 'sm') + av(member(t.b), 'sm') + '</span><span class="grow"><span class="t">' + esc(t.an.split(' ')[0]) + ' & ' + esc(t.bn.split(' ')[0]) + '</span><br><span class="s">' + t.n + ' glasses in common</span></span><b>' + t.match + '%</b></div>'; }).join('') + '</div>'
-      + (st.twins.length > 1 ? '<p class="small muted">Opposite palates: <b>' + esc(st.twins[st.twins.length - 1].an) + '</b> & <b>' + esc(st.twins[st.twins.length - 1].bn) + '</b> (' + st.twins[st.twins.length - 1].match + '%)</p>' : '') : '<p class="dim">Twins appear after members share 3+ glasses.</p>') + '</div>';
-    shell('Hall of Fame', h);
+    h += '<button class="btn block" data-go="members?v=boards">Member leaderboards ›</button>';
+    shell('Hall of Fame', h, { back: 'archive' });
   }
 
   /* ---------- CLUB / MEMBERS / PROFILE ---------- */
+  /* ---------- MEMBERS & PALATES (one place for everything about people) ---------- */
+  function mean_(a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : null; }
+  function palates() {
+    var evs = past().slice().reverse(), P = {}, nScored = 0;
+    (S.members || []).forEach(function (m) { P[m.id] = { m: m, glasses: [], nights: [], att: [], hosted: 0, styles: {}, proofs: [] }; });
+    evs.forEach(function (e) {
+      var R = CO.results(e, S.scores, S.members), rank = CO.isRankOnly(e), here = {};
+      if (!rank) nScored++;
+      if (e.host && P[e.host]) P[e.host].hosted++;
+      (e.attendees || []).forEach(function (a) { here[a] = 1; });
+      R.bottles.forEach(function (b) { b.by.forEach(function (y) { here[y.scorer] = 1; }); });
+      Object.keys(here).forEach(function (id) { if (P[id]) P[id].att.push(e); });
+      if (rank) return;
+      var mine = {};
+      R.bottles.forEach(function (b) {
+        b.by.forEach(function (y) {
+          var p = P[y.scorer]; if (!p) return;
+          var others = b.by.filter(function (z) { return z.scorer !== y.scorer; }).map(function (z) { return z.score; }), om = mean_(others);
+          var g = { e: e, b: b.bottle, s: y.score, club: b.exact, vs: om == null ? null : y.score - om };
+          p.glasses.push(g); (mine[y.scorer] = mine[y.scorer] || []).push(g);
+          var st = b.bottle.style || 'Other'; (p.styles[st] = p.styles[st] || []).push(g);
+          if (+b.bottle.proof) p.proofs.push({ p: +b.bottle.proof, s: y.score });
+        });
+      });
+      Object.keys(mine).forEach(function (id) { var gs = mine[id]; P[id].nights.push({ e: e, avg: mean_(gs.map(function (g) { return g.s; })), club: mean_(gs.map(function (g) { return g.club; })) }); });
+    });
+    var out = Object.keys(P).map(function (id) {
+      var p = P[id], gs = p.glasses, vs = gs.filter(function (g) { return g.vs != null; }).map(function (g) { return g.vs; });
+      p.avg = mean_(gs.map(function (g) { return g.s; })); p.bias = mean_(vs);
+      p.styleRank = Object.keys(p.styles).map(function (k) { var L = p.styles[k], r = L.filter(function (g) { return g.vs != null; }).map(function (g) { return g.vs; }); return { k: k, n: L.length, avg: mean_(L.map(function (g) { return g.s; })), rel: mean_(r) }; })
+        .filter(function (x) { return x.n >= 2 && x.rel != null; }).sort(function (a, b) { return b.rel - a.rel; });
+      var sorted = gs.slice().sort(function (a, b) { return b.s - a.s; }); p.best = sorted.slice(0, 3); p.worst = sorted.slice(-3).reverse();
+      p.hi = sorted.length ? sorted[0].s : null; p.lo = sorted.length ? sorted[sorted.length - 1].s : null;
+      return p;
+    });
+    var byId = {}; out.forEach(function (p) { byId[p.m.id] = p; });
+    return { list: out, byId: byId, events: evs.length, scored: nScored };
+  }
+  function signed(x) { if (x != null) x = Math.round(x * 10) / 10; return x == null ? '\u2013' : (x > 0 ? '+' : x < 0 ? '\u2212' : '\u00b1') + sc(Math.abs(x)); }
+  function biasWord(b) { return b == null ? 'Not enough glasses' : b >= 0.4 ? 'Scores above the table' : b <= -0.4 ? 'Scores below the table' : 'Scores with the table'; }
+  function spark(nights, w, h) {
+    if (nights.length < 2) return '<p class="small dim">Chart appears after two scored nights.</p>';
+    w = w || 320; h = h || 120; var pad = 18, lo = 3, hi = 10, n = nights.length;
+    function X(i) { return pad + i * (w - pad * 2) / (n - 1); } function Y(v) { return h - pad - (v - lo) / (hi - lo) * (h - pad * 2); }
+    function line(k) { return nights.map(function (x, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(x[k]).toFixed(1); }).join(''); }
+    var grid = [4, 6, 8, 10].map(function (v) { return '<line x1="' + pad + '" x2="' + (w - pad) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" class="gl"/><text x="2" y="' + (Y(v) + 3) + '" class="gt">' + v + '</text>'; }).join('');
+    var dots = nights.map(function (x, i) { return '<circle cx="' + X(i) + '" cy="' + Y(x.avg) + '" r="3.2" class="pd"><title>' + esc(x.e.title) + ': ' + sc(x.avg) + ' (table ' + sc(x.club) + ')</title></circle>'; }).join('');
+    return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Score history">' + grid + '<path d="' + line('club') + '" class="pc"/><path d="' + line('avg') + '" class="pm"/>' + dots + '</svg>'
+      + '<div class="row small muted legend"><span><i class="lg-m"></i>Their average per night</span><span><i class="lg-c"></i>Table average, same glasses</span></div>';
+  }
+  function vMembers(q) {
+    var X = palates(), view = (q && q.v) || 'cards', mem = active().concat((S.members || []).filter(function (m) { return m.active === false; }));
+    var h = '<h1>Members</h1><div class="seg" role="tablist">' + [['cards', 'Palates'], ['compare', 'Compare'], ['boards', 'Leaderboards']].map(function (t) { return '<button role="tab" aria-selected="' + (view === t[0]) + '" class="' + (view === t[0] ? 'on' : '') + '" data-go="members?v=' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>';
+    if (view === 'cards') {
+      h += '<div class="pcards">' + mem.map(function (m) { var p = X.byId[m.id] || {}, top = (p.styleRank || [])[0];
+        return '<button class="pcard' + (m.active === false ? ' past' : '') + '" data-go="p/' + m.id + '">' + av(m) + '<span class="grow"><b>' + esc(m.name) + '</b>' + (m.active === false ? ' <span class="pill">Past member</span>' : '')
+          + '<span class="s">' + (top ? 'Leans ' + esc(top.k) : (p.glasses && p.glasses.length ? 'Mixed palate' : 'No scored glasses')) + ' \u00b7 ' + (p.att ? p.att.length : 0) + '/' + X.events + ' nights</span></span>'
+          + '<span class="num"><b>' + sc(p.avg) + '</b><small>' + signed(p.bias) + '</small></span><span class="chev">\u203A</span></button>'; }).join('') + '</div>'
+        + '<p class="small dim">Big number: average score given (out of 10). Small: vs. the rest of the table on the same glasses. Derived from ' + X.scored + ' scored nights; ranked-only nights count for attendance only.</p>';
+    } else if (view === 'compare') {
+      var L = mem.filter(function (m) { return (X.byId[m.id] || {}).glasses && X.byId[m.id].glasses.length; }).map(function (m) { return X.byId[m.id]; });
+      var styles = {}; L.forEach(function (p) { p.styleRank.forEach(function (s) { styles[s.k] = (styles[s.k] || 0) + s.n; }); });
+      var SK = Object.keys(styles).sort(function (a, b) { return styles[b] - styles[a]; }).slice(0, 5);
+      h += '<div class="sec"><h2>Palate map</h2></div><div class="card"><p class="small muted">Each member\u2019s average vs. the table, per style (derived). Gold = scores it higher than the others, grey = lower.</p><div class="cmp"><table><thead><tr><th></th><th>Avg</th><th>vs table</th>' + SK.map(function (k) { return '<th>' + esc(k.replace('Single malt ', 'SM ').replace('Wheated bourbon', 'Wheated')) + '</th>'; }).join('') + '<th>Nights</th></tr></thead><tbody>'
+        + L.map(function (p) { return '<tr><th><button class="lnk" data-go="p/' + p.m.id + '">' + esc(p.m.name.split(' ')[0]) + '</button></th><td>' + sc(p.avg) + '</td><td>' + signed(p.bias) + '</td>' + SK.map(function (k) { var s = p.styleRank.filter(function (x) { return x.k === k; })[0]; return '<td class="' + (s ? (s.rel >= 0.3 ? 'up' : s.rel <= -0.3 ? 'dn' : '') : 'na') + '">' + (s ? signed(s.rel) : '\u00b7') + '</td>'; }).join('') + '<td>' + p.att.length + '</td></tr>'; }).join('') + '</tbody></table></div><p class="small dim">\u00b7 = fewer than 2 glasses of that style.</p></div>';
+      h += '<div class="sec"><h2>Range</h2></div><div class="card">' + L.map(function (p) { var l = p.lo * 10, r = p.hi * 10, a = p.avg * 10; return '<div class="rng"><span class="nm">' + esc(p.m.name.split(' ')[0]) + '</span><span class="tr"><i data-l="' + l + '" data-w="' + (r - l) + '"></i><b data-l="' + a + '"></b></span><span class="small muted">' + sc(p.lo) + '\u2013' + sc(p.hi) + '</span></div>'; }).join('') + '<p class="small dim">Lowest to highest score each member has given; dot = average.</p></div>';
+    } else {
+      var st = CO.stats(S), M = st.members.filter(function (m) { return m.n; });
+      function board_(title, list, val, sub) { return '<div class="card"><h3>' + title + '</h3><div class="list">' + list.slice(0, 5).map(function (m, i) { return '<button class="item" data-go="p/' + m.id + '"><span class="medal">' + (i + 1) + '</span>' + av(member(m.id), 'sm') + '<span class="grow t">' + esc(m.name) + '</span><b>' + val(m) + '</b></button>'; }).join('') + '</div>' + (sub ? '<p class="small dim">' + sub + '</p>' : '') + '</div>'; }
+      h += board_('Iron attendance', M.slice().sort(function (a, b) { return b.attended - a.attended; }), function (m) { return m.attended + '/' + st.events; });
+      h += board_('Golden palate', M.filter(function (m) { return m.accuracy != null; }).sort(function (a, b) { return a.accuracy - b.accuracy; }), function (m) { return '\u00b1' + sc(m.accuracy); }, 'Closest to the table, glass after glass.');
+      h += board_('Most generous', M.filter(function (m) { return m.bias != null; }).sort(function (a, b) { return b.bias - a.bias; }), function (m) { return signed(m.bias); });
+      h += board_('Toughest judge', M.filter(function (m) { return m.bias != null; }).sort(function (a, b) { return a.bias - b.bias; }), function (m) { return signed(m.bias); });
+      h += '<div class="card"><h3>Palate twins</h3>' + (st.twins.length ? '<div class="list">' + st.twins.slice(0, 5).map(function (t) { return '<div class="item"><span class="avs">' + av(member(t.a), 'sm') + av(member(t.b), 'sm') + '</span><span class="grow"><span class="t">' + esc(t.an.split(' ')[0]) + ' & ' + esc(t.bn.split(' ')[0]) + '</span><br><span class="s">' + t.n + ' glasses in common</span></span><b>' + t.match + '%</b></div>'; }).join('') + '</div>' : '<p class="dim">Appears after members share 3+ glasses.</p>') + '</div>';
+    }
+    shell('Members', h);
+  }
   function vClub() {
-    var st = CO.stats(S), by = {}; st.members.forEach(function (m) { by[m.id] = m; });
-    var h = '<h1>The Club</h1><div class="people">' + active().map(function (m) { var x = by[m.id] || {}; return '<button class="person" data-go="p/' + m.id + '">' + av(m) + '<b>' + esc(m.name) + '</b><span class="small muted">' + esc(x.n ? x.biasLabel : 'New palate') + '</span><span class="small dim">' + (x.attended || 0) + ' tastings</span></button>'; }).join('') + '</div>';
-    h += '<div class="sec"><h2>More</h2></div><div class="list">' + tile('wish', '\uD83E\uDD43', 'Bottle wishlist', 'Suggest and vote on the next pour') + tile('hall', '\uD83C\uDFC6', 'Hall of Fame', 'Champions and leaderboards') + tile('sheets', '\uD83D\uDDA8\uFE0F', 'Print scoresheets', '5 paper designs to choose from')
-      + tile('p/' + S.me.id, '\uD83D\uDC64', 'My profile', 'Photo, nickname, my palate') + (isAdmin() ? tile('admin', '\uD83D\uDD11', 'Admin', 'Members, private links, default scoresheet, settings') : '')
+    var h = '<h1>More</h1><div class="list">' + tile('hall', '\uD83C\uDFC6', 'Hall of Fame', 'Champion bottles, all time') + tile('wish', '\uD83E\uDD43', 'Bottle wishlist', 'Suggest and vote on the next pour') + tile('sheets', '\uD83D\uDDA8\uFE0F', 'Print scoresheets', '5 paper designs')
+      + tile('p/' + S.me.id, '\uD83D\uDC64', 'My profile', 'Photo, nickname, my palate') + (isAdmin() ? tile('admin', '\uD83D\uDD11', 'Admin', 'Members, links, settings') : '')
       + (window.AppInstall && AppInstall.visible() ? '<button class="item" data-act="install"><span class="medal">\uD83D\uDCF2</span><span class="grow"><span class="t">Install the app</span><br><span class="s">Put Char &amp; Oak on your home screen</span></span></button>' : '') + '</div>'
       + '<p class="small dim center">' + (DEMO ? 'Demo mode: made-up data, saved only in this browser.' : 'Private club app. Your link is personal; please don\u2019t share it.') + '</p>';
-    shell('The Club', h);
+    shell('More', h);
   }
   function vProfile(id) {
     var m = member(id); if (!m) return notFound();
-    var st = CO.stats(S), x = st.members.filter(function (y) { return y.id === id; })[0] || {}, me = id === S.me.id;
+    var X = palates(), p = X.byId[id], me = id === S.me.id, st = CO.stats(S);
     var tw = st.twins.filter(function (t) { return t.a === id || t.b === id; }), best = tw[0], worst = tw.length > 1 ? tw[tw.length - 1] : null;
     function other(t) { return t.a === id ? t.bn : t.an; }
-    var h = '<div class="center">' + av(m, 'lg') + '<h1>' + esc(m.name) + '</h1>' + (m.nick ? '<p class="eyebrow">\u201c' + esc(m.nick) + '\u201d</p>' : '') + (m.bio ? '<p class="muted">' + esc(m.bio) + '</p>' : '') + (m.favorite ? '<p class="small">Desert-island pour: <b>' + esc(m.favorite) + '</b></p>' : '') + '</div>';
+    var h = '<div class="phead">' + av(m, 'lg') + '<div><h1>' + esc(m.name) + '</h1>' + (m.nick ? '<p class="eyebrow">\u201c' + esc(m.nick) + '\u201d</p>' : '') + (m.active === false ? '<span class="pill">Past member' + (m.left ? ' \u00b7 left ' + esc(m.left.slice(0, 4)) : '') + '</span>' : '') + '</div></div>'
+      + (m.bio ? '<p class="muted center">' + esc(m.bio) + '</p>' : '') + (m.favorite ? '<p class="small center">Desert-island pour: <b>' + esc(m.favorite) + '</b></p>' : '');
     if (me) h += '<button class="btn block" data-act="editMe">Edit my profile</button>';
-    h += '<div class="sec"><h2>Palate</h2></div><div class="grid2"><div class="stat"><b>' + sc(x.avg) + '</b><span>average score given</span></div><div class="stat"><b>' + (x.bias == null ? '\u2013' : (x.bias > 0 ? '+' : '') + sc(x.bias)) + '</b><span>' + esc(x.biasLabel || 'Not enough pours yet') + '</span></div>'
-      + '<div class="stat"><b>' + (x.attendance || 0) + '%</b><span>attendance (' + (x.attended || 0) + ' of ' + st.events + ')</span></div><div class="stat"><b>' + (x.guessPts || 0) + '</b><span>guess-the-bottle points</span></div></div>';
-    if (x.bias != null) { var pos = Math.max(0, Math.min(100, 50 + x.bias * 2.5)); h += '<div class="card"><div class="row between small muted"><span>\uD83E\uDDCA Harsh</span><span>Calibrated</span><span>Generous \uD83C\uDF6F</span></div><div class="bar"><i data-w="' + pos + '"></i></div></div>'; }
-    h += '<div class="card"><p><b>Favorite style:</b> ' + esc(x.favStyle ? x.favStyle + ' (avg ' + sc(x.favAvg) + ')' : 'Too early to tell') + '</p>' + (x.hosted ? '<p><b>Hosted:</b> ' + x.hosted + ' tasting' + (x.hosted > 1 ? 's' : '') + '</p>' : '')
-      + (best ? '<p>\uD83D\uDC6F <b>Palate twin:</b> ' + esc(other(best)) + ' (' + best.match + '% match)</p>' : '') + (worst && worst !== best ? '<p>\u2694\uFE0F <b>Palate rival:</b> ' + esc(other(worst)) + ' (' + worst.match + '%)</p>' : '') + '</div>';
-    if (x.topTags && x.topTags.length) { var tg = {}; x.topTags.forEach(function (t, i) { tg[t] = 6 - i; }); h += '<div class="card"><h3>Always tastes\u2026</h3>' + cloud(tg) + '</div>'; }
-    var hist = past().filter(function (e) { return !CO.isRankOnly(e); }).map(function (e) { var R = CO.results(e, S.scores, S.members), mine = []; R.bottles.forEach(function (b) { b.by.forEach(function (y) { if (y.scorer === id) mine.push({ b: b, s: y.score }); }); }); mine.sort(function (a, b) { return b.s - a.s; }); return { e: e, top: mine[0] }; }).filter(function (r) { return r.top; });
-    if (hist.length) h += '<div class="sec"><h2>Their favorites</h2></div><div class="list">' + hist.map(function (r) { return '<button class="item" data-go="a/' + r.e.id + '"><span class="grow"><span class="t">' + esc(r.top.b.bottle.name) + '</span><br><span class="s">' + esc(r.e.title) + ' \u00b7 ' + esc(fmtDay(evDate(r.e))) + '</span></span><b>' + sc(r.top.s) + '</b></button>'; }).join('') + '</div>';
-    shell('', h, { back: 'club' });
+    h += '<div class="grid3"><div class="stat"><b>' + sc(p.avg) + '</b><span>avg given</span></div><div class="stat"><b>' + signed(p.bias) + '</b><span>vs table</span></div><div class="stat"><b>' + p.att.length + '<small>/' + X.events + '</small></b><span>nights</span></div></div>';
+    if (p.glasses.length) {
+      var top = p.styleRank[0], low = p.styleRank.length > 1 ? p.styleRank[p.styleRank.length - 1] : null;
+      h += '<div class="sec"><h2>Palate</h2><span class="pill">Derived</span></div><div class="card palate"><p><b>' + esc(biasWord(p.bias)) + '</b>' + (p.bias != null ? ' (' + signed(p.bias) + ' per glass vs. everyone else).' : '.') + '</p>'
+        + (top && top.rel > 0 ? '<p>Prefers <b>' + esc(top.k) + '</b>: ' + signed(top.rel) + ' vs table over ' + top.n + ' glasses.</p>' : '')
+        + (low && low.rel < 0 ? '<p>Cooler on <b>' + esc(low.k) + '</b>: ' + signed(low.rel) + ' over ' + low.n + ' glasses.</p>' : '')
+        + '<p>Range given: ' + sc(p.lo) + ' to ' + sc(p.hi) + '.</p>'
+        + (p.proofs.length >= 3 ? '' : '<p class="small dim">Proof range: not enough proof data recorded for past bottles.</p>')
+        + (best ? '<p>Closest palate: <b>' + esc(other(best)) + '</b> (' + best.match + '%)' + (worst && worst !== best ? ' \u00b7 furthest: <b>' + esc(other(worst)) + '</b> (' + worst.match + '%)' : '') + '</p>' : '')
+        + '<p class="small dim">From ' + p.glasses.length + ' scored glasses over ' + p.nights.length + ' nights.</p></div>';
+      h += '<div class="sec"><h2>Score history</h2></div><div class="card">' + spark(p.nights) + '</div>';
+      function gl(list) { return '<div class="list">' + list.map(function (g) { return '<button class="item" data-go="a/' + g.e.id + '"><span class="grow"><span class="t">' + esc(g.b.name) + '</span><br><span class="s">' + esc(g.e.title.replace('Char & Oak ', '')) + ' \u00b7 ' + esc(fmtDay(evDate(g.e))) + ' \u00b7 table ' + sc(g.club) + '</span></span><b>' + sc(g.s) + '</b></button>'; }).join('') + '</div>'; }
+      h += '<div class="sec"><h2>Favorites</h2></div>' + gl(p.best) + '<div class="sec"><h2>Least favorite</h2></div>' + gl(p.worst);
+    } else h += '<div class="card"><p class="dim">No per-person scores on record yet' + (p.att.length ? ' (attended ranked-only or recap-only nights)' : '') + '.</p></div>';
+    h += '<div class="sec"><h2>Attendance</h2></div><div class="att">' + past().slice().reverse().map(function (e) { var here = p.att.indexOf(e) >= 0; return '<button class="ad' + (here ? ' on' : '') + (e.host === id ? ' host' : '') + '" data-go="a/' + e.id + '" title="' + esc(e.title + ' \u00b7 ' + fmtDay(evDate(e))) + '">' + esc(e.title.replace(/^.*#/, '')) + '</button>'; }).join('') + '</div><p class="small dim">Gold = there' + (p.hosted ? ', ring = hosted (' + p.hosted + ')' : '') + '. From scoresheets and the chat record.</p>';
+    shell('Profile', h, { back: 'members' });
   }
   function editMe() {
     var m = S.me;
@@ -807,6 +886,7 @@
       case 'a': vArchiveDetail(r.id); break;
       case 'hall': vHall(); break;
       case 'club': vClub(); break;
+      case 'members': vMembers(r.q); break;
       case 'p': vProfile(r.id); break;
       case 'wish': vWish(); break;
       case 'admin': vAdmin(); break;
